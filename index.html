@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lovelee — Opportunity Tracker</title>
+<style>
+  /* ── Design tokens ───────────────────────────────────────── */
+  :root {
+    --bg:       #1e1b33;
+    --surface:  #272450;
+    --surface2: #2f2b5a;
+    --surface3: #3a3668;
+    --border1:  #3d3870;
+    --border2:  #524d88;
+    --accent:   #8b5cf6;
+    --accent-h: #a78bfa;
+    --accent-d: #7c3aed;
+    --txt:      #f4f0ff;
+    --muted:    #c4b8e8;
+    --hint:     #8c82b8;
+    --danger:   #f87171;
+    --warn:     #fbbf24;
+    --success:  #4ade80;
+    --radius:   10px;
+    --shadow:   0 2px 12px rgba(0,0,0,.35);
+    --mono: 'JetBrains Mono', 'Fira Mono', 'Consolas', monospace;
+    --serif: Georgia, 'Times New Roman', serif;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  /* ── Reset ───────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 14px; scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--txt);
+    font-family: var(--sans);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+  a { color: var(--accent-h); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  button { cursor: pointer; font-family: var(--mono); }
+
+  /* ── Layout ──────────────────────────────────────────────── */
+  .shell {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  /* ── Header ──────────────────────────────────────────────── */
+  header {
+    border-bottom: 1px solid var(--border1);
+    padding: 24px 0 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .logo {
+    font-family: var(--serif);
+    font-size: 1.5rem;
+    font-weight: 400;
+    letter-spacing: .02em;
+    color: var(--txt);
+  }
+  .logo span { color: var(--accent-h); }
+  .subtitle {
+    font-size: .75rem;
+    color: var(--muted);
+    letter-spacing: .05em;
+    margin-top: 3px;
+  }
+  .header-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  #last-updated { font-size: .72rem; color: var(--hint); margin-right: 4px; }
+
+  /* ── Buttons ─────────────────────────────────────────────── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: .82rem;
+    font-family: var(--sans);
+    font-weight: 500;
+    border: none;
+    transition: background .15s, color .15s, box-shadow .15s;
+    white-space: nowrap;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(139,92,246,.4);
+  }
+  .btn-primary:hover { background: var(--accent-h); box-shadow: 0 2px 12px rgba(167,139,250,.5); }
+  .btn-ghost {
+    background: var(--surface2);
+    color: var(--muted);
+    border: 1px solid var(--border1);
+  }
+  .btn-ghost:hover { color: var(--txt); border-color: var(--accent-h); background: var(--surface3); }
+  .btn-sm { padding: 6px 12px; font-size: .78rem; }
+  .btn-success {
+    background: rgba(74,222,128,.18);
+    color: #4ade80;
+    border: 1px solid rgba(74,222,128,.4);
+  }
+  .btn-success:hover { background: rgba(74,222,128,.28); border-color: #4ade80; }
+  .btn-success.applied { opacity: .6; cursor: default; }
+
+  /* ── Stats bar ───────────────────────────────────────────── */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 10px;
+    margin: 20px 0;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border1);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    box-shadow: var(--shadow);
+    transition: border-color .15s;
+  }
+  .stat-card:hover { border-color: var(--border2); }
+  .stat-card .val {
+    font-family: var(--serif);
+    font-size: 2rem;
+    color: var(--txt);
+    line-height: 1;
+    font-weight: 400;
+  }
+  .stat-card .lbl {
+    font-size: .72rem;
+    color: var(--muted);
+    font-weight: 500;
+    letter-spacing: .03em;
+  }
+  .stat-card.accent { border-color: rgba(139,92,246,.6); background: rgba(139,92,246,.08); }
+  .stat-card.accent .val { color: var(--accent-h); }
+
+  /* ── Highlights strip (High priority) ───────────────────── */
+  .highlights-strip {
+    background: linear-gradient(135deg, #1a1400 0%, #110e00 100%);
+    border: 1px solid #c5970a;
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    display: none;
+  }
+  .highlights-strip.show { display: block; }
+  .highlights-title {
+    font-size: .72rem;
+    color: #fbbf24;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    margin-bottom: 8px;
+  }
+  .highlights-items { display: flex; flex-wrap: wrap; gap: 8px; }
+  .highlight-chip {
+    background: rgba(245,158,11,.12);
+    border: 1px solid rgba(245,158,11,.4);
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: .75rem;
+    color: var(--txt);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: background .12s, border-color .12s;
+  }
+  .highlight-chip:hover { background: rgba(245,158,11,.22); border-color: rgba(245,158,11,.7); }
+  .highlight-chip .star { color: #fbbf24; font-size: .8rem; }
+
+  /* priority star in table */
+  .prio-star { color: #fbbf24; margin-right: 4px; font-size: .85rem; }
+
+  /* ── Urgent strip ────────────────────────────────────────── */
+  .urgent-strip {
+    background: linear-gradient(135deg, #1e1040 0%, #151130 100%);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 24px;
+    display: none;
+  }
+  .urgent-strip.show { display: block; }
+  .urgent-title {
+    font-size: .72rem;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    margin-bottom: 8px;
+  }
+  .urgent-items { display: flex; flex-wrap: wrap; gap: 8px; }
+  .urgent-chip {
+    background: rgba(124,58,237,.15);
+    border: 1px solid rgba(124,58,237,.4);
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: .75rem;
+    color: var(--txt);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .urgent-chip .days {
+    color: var(--accent-h);
+    font-weight: 700;
+  }
+  .urgent-chip.overdue { border-color: rgba(220,38,38,.5); background: rgba(220,38,38,.1); }
+  .urgent-chip.overdue .days { color: #f87171; }
+
+  /* ── Controls bar ────────────────────────────────────────── */
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 16px;
+    align-items: center;
+  }
+  .search-wrap {
+    flex: 1;
+    min-width: 200px;
+    position: relative;
+  }
+  .search-wrap svg {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--hint);
+    pointer-events: none;
+  }
+  input[type="search"], input[type="text"], input[type="url"],
+  input[type="date"], select, textarea {
+    background: var(--surface);
+    border: 1px solid var(--border1);
+    color: var(--txt);
+    font-family: var(--sans);
+    font-size: .85rem;
+    border-radius: 8px;
+    padding: 8px 13px;
+    outline: none;
+    width: 100%;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  input[type="search"] { padding-left: 34px; }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--accent-h);
+    box-shadow: 0 0 0 3px rgba(139,92,246,.2);
+  }
+  select option { background: var(--surface2); }
+  .filter-group { display: flex; gap: 8px; flex-wrap: wrap; }
+  .filter-group select { width: auto; min-width: 130px; }
+
+  /* ── Table ───────────────────────────────────────────────── */
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border1);
+    border-radius: var(--radius);
+    overflow: auto;
+    box-shadow: var(--shadow);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .85rem;
+  }
+  thead tr {
+    border-bottom: 1px solid var(--border2);
+  }
+  th {
+    padding: 12px 18px;
+    text-align: left;
+    font-size: .72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--hint);
+    white-space: nowrap;
+    background: var(--surface2);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    cursor: pointer;
+    user-select: none;
+    font-family: var(--sans);
+  }
+  th:hover { color: var(--txt); }
+  th .sort-icon { opacity: .35; margin-left: 4px; font-size: .65rem; }
+  th.sort-asc .sort-icon::after  { content: '↑'; opacity: 1; color: var(--accent-h); }
+  th.sort-desc .sort-icon::after { content: '↓'; opacity: 1; color: var(--accent-h); }
+  th:not(.sort-asc):not(.sort-desc) .sort-icon::after { content: '↕'; }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border1);
+    transition: background .12s;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: rgba(139,92,246,.1); cursor: pointer; }
+  td {
+    padding: 13px 18px;
+    vertical-align: middle;
+  }
+  td.title-col {
+    color: var(--txt);
+    font-weight: 600;
+    min-width: 220px;
+    max-width: 320px;
+    font-size: .88rem;
+  }
+  td.title-col .org-sub {
+    display: block;
+    font-size: .75rem;
+    color: var(--muted);
+    font-weight: 400;
+    margin-top: 3px;
+  }
+  td.type-col   { white-space: nowrap; }
+  td.status-col { white-space: nowrap; }
+  td.deadline-col {
+    white-space: nowrap;
+    font-family: var(--mono);
+    font-size: .8rem;
+    min-width: 115px;
+    color: var(--txt);
+  }
+  td.amount-col {
+    color: var(--accent-h);
+    font-family: var(--mono);
+    font-size: .8rem;
+    font-weight: 600;
+    min-width: 130px;
+    max-width: 170px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  td.notes-col {
+    color: var(--muted);
+    font-size: .78rem;
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* status badges */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: .68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    white-space: nowrap;
+  }
+  .badge-open      { background: rgba(74,222,128,.18); color: #6ee7b7; border: 1px solid rgba(74,222,128,.35); }
+  .badge-submitted { background: rgba(167,139,250,.2); color: #c4b5fd; border: 1px solid rgba(167,139,250,.4); }
+  .badge-watching  { background: rgba(251,191,36,.18); color: #fde68a; border: 1px solid rgba(251,191,36,.35); }
+  .badge-closed    { background: rgba(148,130,200,.15); color: #b0a8d8; border: 1px solid rgba(148,130,200,.3); }
+  .badge-ineligible{ background: rgba(248,113,113,.15); color: #fca5a5; border: 1px solid rgba(248,113,113,.3); }
+
+  /* type badges */
+  .type-badge {
+    display: inline-block;
+    padding: 1px 7px;
+    border-radius: 4px;
+    font-size: .67rem;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    white-space: nowrap;
+  }
+  .type-funding   { background: rgba(124,58,237,.15); color: #c4b5fd; }
+  .type-festival  { background: rgba(217,119,6,.12);  color: #fcd34d; }
+  .type-event     { background: rgba(6,182,212,.12);  color: #67e8f9; }
+  .type-gig       { background: rgba(236,72,153,.12); color: #f9a8d4; }
+  .type-open-call { background: rgba(16,185,129,.12); color: #6ee7b7; }
+
+  /* deadline urgency */
+  .deadline-urgent { color: #f87171; font-weight: 700; }
+  .deadline-soon   { color: #fbbf24; font-weight: 600; }
+  .deadline-ok     { color: var(--muted); }
+  .deadline-past   { color: var(--hint); text-decoration: line-through; }
+
+  /* applied checkbox */
+  .applied-yes { color: #4ade80; }
+  .applied-no  { color: var(--hint); }
+
+  /* ── Empty state ─────────────────────────────────────────── */
+  .empty-state {
+    padding: 60px 24px;
+    text-align: center;
+    color: var(--hint);
+  }
+  .empty-state h3 {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: 1.1rem;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  /* ── Setup banner ────────────────────────────────────────── */
+  .setup-banner {
+    background: rgba(139,92,246,.12);
+    border: 1px solid rgba(139,92,246,.4);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    margin-bottom: 18px;
+    display: none;
+    font-size: .85rem;
+  }
+  .setup-banner.show { display: block; }
+  .setup-banner p { color: var(--muted); margin-top: 4px; font-size: .82rem; }
+  .setup-banner strong { color: var(--accent-h); }
+
+  /* ── Loading ─────────────────────────────────────────────── */
+  .loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 60px;
+    gap: 12px;
+    color: var(--muted);
+    font-size: .85rem;
+  }
+  .spinner {
+    width: 18px; height: 18px;
+    border: 2px solid var(--border2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Modal ───────────────────────────────────────────────── */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.7);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .overlay.show { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    box-shadow: 0 8px 40px rgba(0,0,0,.6);
+    border-radius: 12px;
+    width: 100%;
+    max-width: 560px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 28px 28px 24px;
+    position: relative;
+  }
+  .modal h2 {
+    font-family: var(--serif);
+    font-size: 1.2rem;
+    font-weight: 400;
+    margin-bottom: 20px;
+    color: var(--txt);
+  }
+  .field label { font-family: var(--sans); }
+  .form-grid input, .form-grid select, .form-grid textarea { font-family: var(--sans); }
+  .modal-close {
+    position: absolute;
+    top: 18px; right: 20px;
+    background: none;
+    border: none;
+    color: var(--hint);
+    font-size: 1.2rem;
+    line-height: 1;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: color .15s;
+  }
+  .modal-close:hover { color: var(--txt); }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .form-grid .full { grid-column: 1 / -1; }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+  .form-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 20px;
+  }
+  .form-error { color: #f87171; font-size: .78rem; margin-top: 8px; display: none; }
+  .form-error.show { display: block; }
+  .form-success { color: #4ade80; font-size: .78rem; margin-top: 8px; display: none; }
+  .form-success.show { display: block; }
+
+  /* ── Row detail panel ────────────────────────────────────── */
+  .detail-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.6);
+    z-index: 100;
+    justify-content: flex-end;
+  }
+  .detail-overlay.show { display: flex; }
+  .detail-panel {
+    background: var(--surface);
+    border-left: 1px solid var(--border2);
+    box-shadow: -8px 0 32px rgba(0,0,0,.4);
+    width: 100%;
+    max-width: 420px;
+    height: 100%;
+    overflow-y: auto;
+    padding: 28px 24px;
+    position: relative;
+  }
+  .detail-panel h2 {
+    font-family: var(--serif);
+    font-size: 1.15rem;
+    font-weight: 400;
+    margin-bottom: 4px;
+    padding-right: 32px;
+  }
+  .detail-panel .org { font-size: .8rem; color: var(--muted); margin-bottom: 20px; }
+  .detail-close {
+    position: absolute;
+    top: 18px; right: 20px;
+    background: none;
+    border: none;
+    color: var(--hint);
+    font-size: 1.2rem;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: color .15s;
+    cursor: pointer;
+  }
+  .detail-close:hover { color: var(--txt); }
+  .detail-row { display: flex; gap: 12px; margin-bottom: 12px; font-size: .8rem; }
+  .detail-row .dk { color: var(--hint); min-width: 110px; font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; padding-top: 1px; }
+  .detail-row .dv { color: var(--txt); flex: 1; word-break: break-word; }
+  .detail-divider { border: none; border-top: 1px solid var(--border1); margin: 16px 0; }
+  .detail-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 20px; }
+
+  /* ── Claude URL panel ───────────────────────────────────────── */
+  .claude-panel {
+    background: linear-gradient(135deg, rgba(139,92,246,.1), rgba(99,60,200,.06));
+    border: 1px solid rgba(139,92,246,.4);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-bottom: 18px;
+    display: none;
+    gap: 10px;
+    flex-direction: column;
+  }
+  .claude-panel.show { display: flex; }
+  .claude-panel-title { font-size: .78rem; color: var(--accent-h); font-weight: 600; }
+  .claude-panel-desc  { font-size: .76rem; color: var(--muted); line-height: 1.5; }
+  .claude-url-row { display: flex; gap: 8px; align-items: center; }
+  .claude-url-row input { flex: 1; }
+  .claude-copied { font-size: .72rem; color: #4ade80; display: none; white-space: nowrap; }
+  .claude-copied.show { display: block; }
+
+  /* ── Footer ──────────────────────────────────────────────── */
+  footer {
+    border-top: 1px solid var(--border1);
+    padding: 16px 0;
+    margin-top: 40px;
+    font-size: .78rem;
+    color: var(--hint);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-family: var(--sans);
+  }
+
+  /* ── Responsive ──────────────────────────────────────────── */
+  @media (max-width: 700px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .form-grid .full { grid-column: 1; }
+    th, td { padding: 8px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════
+     CONFIGURATION — set SCRIPT_URL after deploying appsscript.gs
+     Leave empty to run on hardcoded seed data only (read-only).
+══════════════════════════════════════════════════════════ -->
+<script>
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw9lNwx2WJM60O6oc53WDBsXqT2bauZnJ4Dl176dyNlinvqFZjIFIZ6UxvodNj0BPY4/exec';
+</script>
+
+<div class="shell">
+
+  <!-- Header -->
+  <header>
+    <div>
+      <div class="logo">lovelee <span>·</span> Opportunity Tracker</div>
+      <div class="subtitle">Funding · Festivals · Open Calls · Residencies</div>
+    </div>
+    <div class="header-actions">
+      <span id="last-updated"></span>
+      <button class="btn btn-ghost btn-sm" id="refresh-btn" title="Refresh data from Sheet">⟳ Refresh</button>
+      <button class="btn btn-ghost btn-sm" id="scan-btn" title="Scan all sources for new opportunities">⚡ Scan Sources</button>
+      <button class="btn btn-ghost btn-sm" id="claude-btn" title="Add opportunity via Claude AI">🤖 Add via Claude</button>
+      <button class="btn btn-primary" id="add-btn">+ Add Manually</button>
+    </div>
+  </header>
+
+  <!-- Setup banner -->
+  <div class="setup-banner" id="setup-banner">
+    <strong>⚡ Script not connected.</strong>
+    <p>Showing seed data. To connect live data, the Add form, and the ⚡ Scan Sources button: deploy <code>appsscript.gs</code> and set <code>SCRIPT_URL</code> in <code>index.html</code>. Full instructions are at the top of <code>appsscript.gs</code>.</p>
+  </div>
+
+  <!-- Claude URL panel -->
+  <div class="claude-panel" id="claude-panel">
+    <div class="claude-panel-title">🤖 Add opportunity via Claude</div>
+    <div class="claude-panel-desc">Paste any URL — a festival application page, funding page, open call, anything. Click the button and Claude will read the page, extract all the details, and add it to your Sheet automatically.</div>
+    <div class="claude-url-row">
+      <input type="url" id="claude-url-input" placeholder="https://…  paste any opportunity URL here">
+      <button class="btn btn-primary btn-sm" id="claude-send-btn">📋 Open Claude with this</button>
+      <span class="claude-copied" id="claude-copied">✓ Copied! Paste in Claude ↗</span>
+    </div>
+  </div>
+
+  <!-- Stats bar -->
+  <div class="stats-bar" id="stats-bar">
+    <div class="stat-card accent"><div class="val" id="stat-total">—</div><div class="lbl">Total</div></div>
+    <div class="stat-card"><div class="val" id="stat-open">—</div><div class="lbl">Open</div></div>
+    <div class="stat-card"><div class="val" id="stat-submitted">—</div><div class="lbl">Submitted</div></div>
+    <div class="stat-card"><div class="val" id="stat-watching">—</div><div class="lbl">Watching</div></div>
+    <div class="stat-card"><div class="val" id="stat-urgent">—</div><div class="lbl">Due ≤ 30 days</div></div>
+    <div class="stat-card"><div class="val" id="stat-funding">—</div><div class="lbl">Funding</div></div>
+    <div class="stat-card"><div class="val" id="stat-festival">—</div><div class="lbl">Festivals</div></div>
+    <div class="stat-card" style="border-color:rgba(245,158,11,.5);background:rgba(245,158,11,.06)"><div class="val" id="stat-high" style="color:#fbbf24">—</div><div class="lbl">⭐ High Priority</div></div>
+  </div>
+
+  <!-- Highlights strip (High priority) -->
+  <div class="highlights-strip" id="highlights-strip">
+    <div class="highlights-title">⭐ Significant opportunities</div>
+    <div class="highlights-items" id="highlights-items"></div>
+  </div>
+
+  <!-- Urgent strip -->
+  <div class="urgent-strip" id="urgent-strip">
+    <div class="urgent-title">⚡ Action needed — deadlines in the next 30 days</div>
+    <div class="urgent-items" id="urgent-items"></div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <div class="search-wrap">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input type="search" id="search" placeholder="Search title, org, notes…">
+    </div>
+    <div class="filter-group">
+      <select id="filter-type">
+        <option value="">All types</option>
+        <option>funding</option>
+        <option>festival</option>
+        <option>event</option>
+        <option>gig</option>
+        <option>open-call</option>
+      </select>
+      <select id="filter-status">
+        <option value="">All statuses</option>
+        <option>open</option>
+        <option>submitted</option>
+        <option>watching</option>
+        <option>closed</option>
+        <option>ineligible</option>
+      </select>
+      <select id="filter-region">
+        <option value="">All regions</option>
+        <option>Germany</option>
+        <option>Germany / Berlin</option>
+        <option>International</option>
+        <option>EU / Germany</option>
+        <option>Netherlands</option>
+        <option>Austria</option>
+        <option>Portugal</option>
+      </select>
+    </div>
+    <span id="count-label" style="font-size:.75rem;color:var(--hint);white-space:nowrap;"></span>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrap" id="table-wrap">
+    <div class="loading" id="loading"><div class="spinner"></div>Loading opportunities…</div>
+    <table id="opp-table" style="display:none">
+      <thead>
+        <tr>
+          <th data-col="Title">Opportunity<span class="sort-icon"></span></th>
+          <th data-col="Type">Type<span class="sort-icon"></span></th>
+          <th data-col="Status">Status<span class="sort-icon"></span></th>
+          <th data-col="Deadline">Deadline<span class="sort-icon"></span></th>
+          <th data-col="Amount">Amount<span class="sort-icon"></span></th>
+          <th data-col="Notes">Notes<span class="sort-icon"></span></th>
+        </tr>
+      </thead>
+      <tbody id="opp-tbody"></tbody>
+    </table>
+    <div class="empty-state" id="empty-state" style="display:none">
+      <h3>No opportunities match your filters.</h3>
+      <p>Try adjusting the search or filters above.</p>
+    </div>
+  </div>
+
+</div><!-- /.shell -->
+
+<!-- Footer -->
+<div class="shell" style="padding-top:0">
+  <footer>
+    <span>lovelee_opportunities · Google Sheet <a href="https://docs.google.com/spreadsheets/d/1Si1_GF1DVPq7ZNfH5NPOxQaH6gJDtiDDbqTUYT7kQg4/edit" target="_blank">↗ open sheet</a></span>
+    <span id="footer-count"></span>
+  </footer>
+</div>
+
+<!-- Add Opportunity Modal -->
+<div class="overlay" id="add-overlay">
+  <div class="modal">
+    <button class="modal-close" id="add-close">✕</button>
+    <h2>Add Opportunity</h2>
+    <form id="add-form" autocomplete="off">
+      <div class="form-grid">
+        <div class="field full">
+          <label>Title *</label>
+          <input type="text" name="Title" required placeholder="e.g. Round 74 Popmusik">
+        </div>
+        <div class="field">
+          <label>Organisation *</label>
+          <input type="text" name="Organization" required placeholder="e.g. Initiative Musik">
+        </div>
+        <div class="field">
+          <label>Type *</label>
+          <select name="Type" required>
+            <option value="">— select —</option>
+            <option>funding</option>
+            <option>festival</option>
+            <option>event</option>
+            <option>gig</option>
+            <option>open-call</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Status *</label>
+          <select name="Status" required>
+            <option value="">— select —</option>
+            <option>open</option>
+            <option>watching</option>
+            <option>submitted</option>
+            <option>closed</option>
+            <option>ineligible</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Deadline</label>
+          <input type="text" name="Deadline" placeholder="yyyy-mm-dd or rolling">
+        </div>
+        <div class="field">
+          <label>Amount</label>
+          <input type="text" name="Amount" placeholder="e.g. €3,500">
+        </div>
+        <div class="field">
+          <label>Region</label>
+          <input type="text" name="Region" placeholder="e.g. Germany / Berlin">
+        </div>
+        <div class="field">
+          <label>Source</label>
+          <input type="text" name="Source" placeholder="e.g. Musicboard Berlin">
+        </div>
+        <div class="field full">
+          <label>URL</label>
+          <input type="url" name="URL" placeholder="https://…">
+        </div>
+        <div class="field full">
+          <label>Eligibility</label>
+          <input type="text" name="Eligibility" placeholder="e.g. Berlin residence, GEMA member">
+        </div>
+        <div class="field">
+          <label>Priority</label>
+          <select name="Priority">
+            <option value="Normal">Normal</option>
+            <option value="High">⭐ High</option>
+            <option value="Low">Low</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label>Notes</label>
+          <textarea name="Notes" rows="3" placeholder="Any additional notes…"></textarea>
+        </div>
+      </div>
+      <div class="form-error" id="form-error"></div>
+      <div class="form-success" id="form-success"></div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-ghost" id="add-cancel">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="add-submit">Save Opportunity</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Row Detail Panel -->
+<div class="detail-overlay" id="detail-overlay">
+  <div class="detail-panel" id="detail-panel">
+    <button class="detail-close" id="detail-close">✕</button>
+    <h2 id="dp-title"></h2>
+    <div class="org" id="dp-org"></div>
+    <div id="dp-fields"></div>
+    <div class="detail-actions" id="dp-actions"></div>
+  </div>
+</div>
+
+<script>
+// ── Seed data (shown when SCRIPT_URL is not set) ──────────────
+const SEED = [
+  {ID:"OPP001",Title:"Round 73 Popmusik",Organization:"Initiative Musik",Type:"funding",Status:"submitted",Deadline:"2026-04-30",Amount:"€8,750",Region:"Germany",Eligibility:"Berlin residence, GEMA, KSK",URL:"https://www.initiative-musik.de",Notes:"Applied Round 73",Source:"Initiative Musik","Date Added":"2026-05-08","Date Updated":"2026-05-08",Applied:"TRUE",Result:"",Priority:"High"},
+  {ID:"OPP002",Title:"Support Tour Funding 2026",Organization:"Musicboard Berlin",Type:"funding",Status:"open",Deadline:"2026-11-30",Amount:"up to €3,500",Region:"Germany / Berlin",Eligibility:"Berlin residence, GEMA",URL:"https://www.musicboard-berlin.de",Notes:"Rolling submissions",Source:"Musicboard Berlin","Date Added":"2026-05-08","Date Updated":"2026-05-08",Applied:"FALSE",Result:"",Priority:"Normal"},
+  {ID:"OPP003",Title:"Music Ambassador Programm 2026",Organization:"Berlin Music Commission",Type:"funding",Status:"open",Deadline:"2026-05-28",Amount:"travel costs",Region:"Germany / Berlin",Eligibility:"Berlin residence",URL:"https://www.berlin-music-commission.de",Notes:"Deadline May 28",Source:"Berlin Music Commission","Date Added":"2026-05-08","Date Updated":"2026-05-08",Applied:"FALSE",Result:"",Priority:"Normal"},
+  {ID:"OPP004",Title:"GEMA Basisförderung",Organization:"GEMA",Type:"funding",Status:"open",Deadline:"2026-05-17",Amount:"€2,000",Region:"Germany",Eligibility:"GEMA member",URL:"https://www.gema.de/kulturfoerderung-online",Notes:"First 400 approved get €2,000. Deadline May 17.",Source:"GEMA","Date Added":"2026-05-08","Date Updated":"2026-05-08",Applied:"FALSE",Result:"",Priority:"Normal"},
+  {ID:"OPP005",Title:"Labelförderung Round 2",Organization:"Musicboard Berlin",Type:"funding",Status:"ineligible",Deadline:"2026-05-15",Amount:"variable",Region:"Germany / Berlin",Eligibility:"Label with GVL code required",URL:"https://www.musicboard-berlin.de",Notes:"No GVL label code",Source:"Musicboard Berlin","Date Added":"2026-05-08","Date Updated":"2026-05-08",Applied:"FALSE",Result:"",Priority:"Normal"},
+  {ID:"OPP006",Title:"International Live and Showcase Funding",Organization:"Initiative Musik",Type:"funding",Status:"watching",Deadline:"rolling",Amount:"variable",Region:"International",Eligibility:"Berlin residence, GEMA",URL:"https://www.initiative-musik.de",Notes:"Rolling deadline",Source:"Initiative Musik","Date Added":"2026-05-08","Date Updated":"2026-05-08",Applied:"FALSE",Result:"",Priority:"High"},
+  {ID:"OPP007",Title:"International Export Funding",Organization:"Initiative Musik",Type:"funding",Status:"watching",Deadline:"2-3 rounds/year",Amount:"up to €20,000",Region:"International",Eligibility:"Berlin residence, GEMA",URL:"https://www.initiative-musik.de",Notes:"2-3 rounds per year",Source:"Initiative Musik","Date Added":"2026-05-08","Date Updated":"2026-05-08",Applied:"FALSE",Result:"",Priority:"High"},
+  {ID:"OPP008",Title:"WOMEX 2026 Delegate",Organization:"German Music Export",Type:"event",Status:"watching",Deadline:"2026-06-08",Amount:"subsidised ticket",Region:"International",Eligibility:"Berlin residence",URL:"https://www.german-music-export.de",Notes:"Delegate ticket subsidy",Source:"German Music Export","Date Added":"2026-05-08","Date Updated":"2026-05-08",Applied:"FALSE",Result:"",Priority:"Normal"},
+  {ID:"OPP009",Title:"Twisted Trees Festival 2026",Organization:"Kero Productions",Type:"festival",Status:"open",Deadline:"2026-05-08",Amount:"performance",Region:"Germany",Eligibility:"Open",URL:"https://www.keroproductions.com",Notes:"Send 10-15 min audio to info@keroproductions.com",Source:"Manual","Date Added":"2026-05-08","Date Updated":"2026-05-08",Applied:"FALSE",Result:"",Priority:"Normal"},
+  {ID:"OPP010",Title:"AltShift Festival 2026",Organization:"AltShift",Type:"festival",Status:"open",Deadline:"2026-05-10",Amount:"food/camping/reimbursement",Region:"Germany",Eligibility:"Open",URL:"https://altshift.de",Notes:"Deadline May 10",Source:"Manual","Date Added":"2026-05-08","Date Updated":"2026-05-08",Applied:"FALSE",Result:"",Priority:"Normal"},
+  {ID:"OPP011",Title:"Reeperbahn Festival 2026",Organization:"Reeperbahn",Type:"festival",Status:"open",Deadline:"rolling",Amount:"performance",Region:"Germany",Eligibility:"Open",URL:"https://www.reeperbahn-festival.de",Notes:"Rolling — submit now",Source:"Reeperbahn","Date Added":"2026-05-08","Date Updated":"2026-05-08",Applied:"FALSE",Result:"",Priority:"High"},
+  {ID:"OPP012",Title:"Waves Vienna 2026",Organization:"Waves Vienna",Type:"festival",Status:"open",Deadline:"2026-05-29",Amount:"performance",Region:"Austria",Eligibility:"Open",URL:"https://wavesvienna.com",Notes:"Deadline May 29",Source:"Waves Vienna","Date Added":"2026-05-08","Date Updated":"2026-05-08",Applied:"FALSE",Result:"",Priority:"Normal"},
+  {ID:"OPP013",Title:"MIL Lisboa 2026",Organization:"MIL",Type:"festival",Status:"open",Deadline:"2026-06-10",Amount:"performance",Region:"Portugal",Eligibility:"Open",URL:"https://mil-lisboa.pt",Notes:"Deadline June 10",Source:"MIL","Date Added":"2026-05-08","Date Updated":"2026-05-08",Applied:"FALSE",Result:"",Priority:"High"},
+  {ID:"OPP014",Title:"Eurosonic Noorderslag 2027",Organization:"ESNS",Type:"festival",Status:"watching",Deadline:"2026-09-01",Amount:"performance",Region:"Netherlands",Eligibility:"Open",URL:"https://www.eurosonic-noorderslag.nl",Notes:"Sept 2026 deadline for 2027 edition",Source:"ESNS","Date Added":"2026-05-08","Date Updated":"2026-05-08",Applied:"FALSE",Result:"",Priority:"High"},
+  {ID:"OPP015",Title:"Fête de la Musique Berlin",Organization:"Musicboard Berlin",Type:"gig",Status:"open",Deadline:"2026-06-21",Amount:"exposure",Region:"Germany / Berlin",Eligibility:"Berlin artist",URL:"https://www.musicboard-berlin.de",Notes:"June 21 event",Source:"Musicboard Berlin","Date Added":"2026-05-08","Date Updated":"2026-05-08",Applied:"FALSE",Result:"",Priority:"Normal"},
+  {ID:"OPP016",Title:"Listen to Berlin 2026",Organization:"Berlin Music Commission",Type:"open-call",Status:"closed",Deadline:"2026-04-28",Amount:"compilation/showcase",Region:"Germany / Berlin",Eligibility:"Berlin artist",URL:"https://www.berlin-music-commission.de",Notes:"Missed — closed Apr 28",Source:"Berlin Music Commission","Date Added":"2026-05-08","Date Updated":"2026-05-08",Applied:"FALSE",Result:"",Priority:"Normal"},
+  {ID:"OPP017",Title:"Tune In Studio Open Call",Organization:"Berlin Senate / Tune In",Type:"open-call",Status:"open",Deadline:"2026-05-31",Amount:"free studio time",Region:"Germany / Berlin",Eligibility:"Berlin artist",URL:"https://www.tunein-berlin.de",Notes:"Free studio time. Deadline May 31.",Source:"Berlin Senate","Date Added":"2026-05-08","Date Updated":"2026-05-08",Applied:"FALSE",Result:"",Priority:"Normal"},
+  {ID:"OPP018",Title:"Musikfonds Kleine Projektförderung",Organization:"Musikfonds",Type:"funding",Status:"watching",Deadline:"2026-05-29",Amount:"up to €3,000",Region:"Germany",Eligibility:"Professional artist",URL:"https://www.musikfonds.de",Notes:"Deadline May 29",Source:"Musikfonds","Date Added":"2026-05-08","Date Updated":"2026-05-08",Applied:"FALSE",Result:"",Priority:"Normal"},
+  {ID:"OPP019",Title:"KOMPASS Soloselbständige",Organization:"EU / BMAS",Type:"funding",Status:"watching",Deadline:"rolling",Amount:"training costs",Region:"EU / Germany",Eligibility:"Self-employed",URL:"https://www.bmas.de",Notes:"Rolling — training cost subsidy",Source:"EU/BMAS","Date Added":"2026-05-08","Date Updated":"2026-05-08",Applied:"FALSE",Result:"",Priority:"Normal"}
+];
+
+// ── State ──────────────────────────────────────────────────────
+let allOpps = [];
+let filtered = [];
+let sortCol = 'Deadline';
+let sortDir = 1; // 1 = asc, -1 = desc
+
+// ── Init ───────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  if (!SCRIPT_URL) {
+    document.getElementById('setup-banner').classList.add('show');
+    loadData(SEED);
+  } else {
+    fetchFromScript();
+  }
+
+  document.getElementById('refresh-btn').addEventListener('click', () => {
+    if (SCRIPT_URL) fetchFromScript(); else loadData(SEED);
+  });
+  document.getElementById('scan-btn').addEventListener('click', runScan);
+  document.getElementById('claude-btn').addEventListener('click', toggleClaudePanel);
+  document.getElementById('claude-send-btn').addEventListener('click', openWithClaude);
+  document.getElementById('add-btn').addEventListener('click', openAddModal);
+  document.getElementById('add-close').addEventListener('click', closeAddModal);
+  document.getElementById('add-cancel').addEventListener('click', closeAddModal);
+  document.getElementById('detail-close').addEventListener('click', closeDetail);
+  document.getElementById('add-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeAddModal(); });
+  document.getElementById('detail-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeDetail(); });
+  document.getElementById('add-form').addEventListener('submit', handleSubmit);
+  document.getElementById('search').addEventListener('input', applyFilters);
+  document.getElementById('filter-type').addEventListener('change', applyFilters);
+  document.getElementById('filter-status').addEventListener('change', applyFilters);
+  document.getElementById('filter-region').addEventListener('change', applyFilters);
+  document.querySelectorAll('th[data-col]').forEach(th => {
+    th.addEventListener('click', () => handleSort(th.dataset.col));
+  });
+});
+
+// ── Data fetching ──────────────────────────────────────────────
+async function fetchFromScript() {
+  document.getElementById('loading').style.display = 'flex';
+  document.getElementById('opp-table').style.display = 'none';
+  document.getElementById('empty-state').style.display = 'none';
+  try {
+    const res = await fetch(SCRIPT_URL);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    loadData(data.opportunities || []);
+    setLastUpdated();
+  } catch (e) {
+    console.error('Fetch failed, falling back to seed data:', e);
+    document.getElementById('setup-banner').classList.add('show');
+    loadData(SEED);
+  }
+}
+
+function loadData(opps) {
+  allOpps = opps;
+  document.getElementById('loading').style.display = 'none';
+  applyFilters();
+  renderStats();
+  renderUrgent();
+  renderHighlights();
+  setLastUpdated();
+}
+
+function setLastUpdated() {
+  document.getElementById('last-updated').textContent =
+    'Updated ' + new Date().toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
+}
+
+// ── Filters & sort ─────────────────────────────────────────────
+function applyFilters() {
+  const q = document.getElementById('search').value.trim().toLowerCase();
+  const type = document.getElementById('filter-type').value;
+  const status = document.getElementById('filter-status').value;
+  const region = document.getElementById('filter-region').value;
+
+  filtered = allOpps.filter(o => {
+    if (type && o.Type !== type) return false;
+    if (status && o.Status !== status) return false;
+    if (region && o.Region !== region) return false;
+    if (q) {
+      const hay = [o.Title, o.Organization, o.Notes, o.Amount, o.Eligibility].join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  sortData();
+  renderTable();
+  updateCountLabel();
+}
+
+function sortData() {
+  filtered.sort((a, b) => {
+    let av = a[sortCol] || '', bv = b[sortCol] || '';
+    // Put non-date strings like "rolling" at end when sorting by deadline
+    if (sortCol === 'Deadline') {
+      const da = parseDeadline(av), db = parseDeadline(bv);
+      if (da && db) return (da - db) * sortDir;
+      if (da) return -1 * sortDir;
+      if (db) return 1 * sortDir;
+    }
+    return av.localeCompare(bv, 'de') * sortDir;
+  });
+}
+
+function handleSort(col) {
+  if (sortCol === col) sortDir *= -1; else { sortCol = col; sortDir = 1; }
+  document.querySelectorAll('th[data-col]').forEach(th => {
+    th.classList.remove('sort-asc', 'sort-desc');
+    if (th.dataset.col === col) th.classList.add(sortDir === 1 ? 'sort-asc' : 'sort-desc');
+  });
+  sortData();
+  renderTable();
+}
+
+// ── Render table ───────────────────────────────────────────────
+function renderTable() {
+  const tbody = document.getElementById('opp-tbody');
+  const table = document.getElementById('opp-table');
+  const empty = document.getElementById('empty-state');
+
+  if (!filtered.length) {
+    table.style.display = 'none';
+    empty.style.display = 'block';
+    document.getElementById('footer-count').textContent = '';
+    return;
+  }
+
+  empty.style.display = 'none';
+  table.style.display = 'table';
+
+  tbody.innerHTML = filtered.map(o => `
+    <tr data-id="${esc(o.ID)}" style="cursor:pointer${o.Priority === 'High' ? ';background:rgba(245,158,11,.04)' : ''}">
+      <td class="title-col">
+        ${o.Priority === 'High' ? '<span class="prio-star" title="High priority">⭐</span>' : ''}${esc(o.Title)}
+        <span class="org-sub">${esc(o.Organization)}${o.Region ? ' · ' + esc(o.Region) : ''}</span>
+      </td>
+      <td class="type-col"><span class="type-badge type-${esc(o.Type)}">${esc(o.Type)}</span></td>
+      <td class="status-col"><span class="badge badge-${esc(o.Status)}">${esc(o.Status)}</span></td>
+      <td class="deadline-col ${deadlineClass(o.Deadline, o.Status)}">${formatDeadline(o.Deadline)}</td>
+      <td class="amount-col" title="${esc(o.Amount)}">${esc(o.Amount)}</td>
+      <td class="notes-col" title="${esc(o.Notes)}">${esc(o.Notes)}</td>
+    </tr>
+  `).join('');
+
+  tbody.querySelectorAll('tr').forEach((tr, i) => {
+    tr.addEventListener('click', () => openDetail(filtered[i]));
+  });
+
+  document.getElementById('footer-count').textContent =
+    filtered.length + ' of ' + allOpps.length + ' opportunities';
+}
+
+function updateCountLabel() {
+  document.getElementById('count-label').textContent =
+    filtered.length !== allOpps.length
+      ? filtered.length + ' / ' + allOpps.length + ' shown'
+      : allOpps.length + ' opportunities';
+}
+
+// ── Stats ──────────────────────────────────────────────────────
+function renderStats() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const in14 = new Date(today); in14.setDate(today.getDate() + 14);
+
+  const open = allOpps.filter(o => o.Status === 'open').length;
+  const submitted = allOpps.filter(o => o.Status === 'submitted').length;
+  const watching = allOpps.filter(o => o.Status === 'watching').length;
+  const in30 = new Date(today); in30.setDate(today.getDate() + 30);
+  const urgent = allOpps.filter(o => {
+    const d = parseDeadline(o.Deadline);
+    return d && d >= today && d <= in30 && o.Status !== 'closed' && o.Status !== 'ineligible' && o.Status !== 'submitted';
+  }).length;
+  const funding = allOpps.filter(o => o.Type === 'funding').length;
+  const festival = allOpps.filter(o => o.Type === 'festival').length;
+  const high = allOpps.filter(o => o.Priority === 'High').length;
+
+  document.getElementById('stat-total').textContent = allOpps.length;
+  document.getElementById('stat-open').textContent = open;
+  document.getElementById('stat-submitted').textContent = submitted;
+  document.getElementById('stat-watching').textContent = watching;
+  document.getElementById('stat-urgent').textContent = urgent;
+  document.getElementById('stat-funding').textContent = funding;
+  document.getElementById('stat-festival').textContent = festival;
+  document.getElementById('stat-high').textContent = high;
+}
+
+// ── Urgent strip ───────────────────────────────────────────────
+function renderUrgent() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const in14 = new Date(today); in14.setDate(today.getDate() + 14);
+
+  const in30 = new Date(today); in30.setDate(today.getDate() + 30);
+  const urgent = allOpps
+    .filter(o => {
+      const d = parseDeadline(o.Deadline);
+      return d && d <= in30 && o.Status !== 'closed' && o.Status !== 'ineligible' && o.Status !== 'submitted';
+    })
+    .sort((a, b) => parseDeadline(a.Deadline) - parseDeadline(b.Deadline));
+
+  if (!urgent.length) return;
+
+  const strip = document.getElementById('urgent-strip');
+  strip.classList.add('show');
+  document.getElementById('urgent-items').innerHTML = urgent.map(o => {
+    const d = parseDeadline(o.Deadline);
+    const diff = Math.ceil((d - today) / 86400000);
+    const overdue = diff < 0;
+    const label = overdue
+      ? `${Math.abs(diff)}d overdue`
+      : diff === 0 ? 'TODAY' : `${diff}d`;
+    return `<div class="urgent-chip ${overdue ? 'overdue' : ''}" onclick="openDetailById('${esc(o.ID)}')">
+      <span class="days">${label}</span>${esc(o.Title)}
+    </div>`;
+  }).join('');
+}
+
+// ── Highlights strip (High priority) ──────────────────────────
+function renderHighlights() {
+  const high = allOpps.filter(o => o.Priority === 'High'
+    && o.Status !== 'closed' && o.Status !== 'ineligible');
+
+  const strip = document.getElementById('highlights-strip');
+  if (!high.length) { strip.classList.remove('show'); return; }
+
+  strip.classList.add('show');
+  document.getElementById('highlights-items').innerHTML = high.map(o => {
+    const d = parseDeadline(o.Deadline);
+    const today = new Date(); today.setHours(0,0,0,0);
+    const daysLabel = d
+      ? (() => {
+          const diff = Math.ceil((d - today) / 86400000);
+          return diff < 0 ? `<span style="color:#f87171;font-weight:700">${Math.abs(diff)}d overdue</span>`
+               : diff === 0 ? '<span style="color:#f87171;font-weight:700">TODAY</span>'
+               : `<span style="color:#fbbf24">${diff}d</span>`;
+        })()
+      : '';
+    return `<div class="highlight-chip" onclick="openDetailById('${esc(o.ID)}')">
+      <span class="star">⭐</span>${esc(o.Title)}${daysLabel ? ' · ' + daysLabel : ''}
+    </div>`;
+  }).join('');
+}
+
+// ── Mark Applied ───────────────────────────────────────────────
+async function markApplied(id) {
+  if (!SCRIPT_URL) {
+    alert('Apps Script not connected — deploy appsscript.gs first.');
+    return;
+  }
+  const btn = event.target;
+  btn.textContent = '⏳ Saving…';
+  btn.disabled = true;
+  try {
+    const res = await fetch(SCRIPT_URL + '?action=markApplied&id=' + encodeURIComponent(id));
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    btn.textContent = '✓ Applied';
+    btn.classList.add('applied');
+    // Update local state so re-render reflects change
+    const opp = allOpps.find(x => x.ID === id);
+    if (opp) { opp.Applied = 'TRUE'; opp.Status = 'submitted'; }
+    // Refresh stats & table
+    renderStats();
+    renderHighlights();
+    applyFilters();
+  } catch (err) {
+    btn.textContent = '✗ Failed';
+    btn.disabled = false;
+    console.error(err);
+  }
+}
+
+// ── Detail panel ───────────────────────────────────────────────
+function openDetail(o) {
+  document.getElementById('dp-title').textContent = o.Title;
+  document.getElementById('dp-org').textContent = o.Organization;
+
+  const isHighPriority = o.Priority === 'High';
+  const fields = [
+    ['Status',   `<span class="badge badge-${esc(o.Status)}">${esc(o.Status)}</span>`],
+    ['Type',     `<span class="type-badge type-${esc(o.Type)}">${esc(o.Type)}</span>`],
+    ['Priority', isHighPriority ? '<span style="color:#fbbf24;font-weight:600">⭐ High</span>' : esc(o.Priority || 'Normal')],
+    ['Deadline', formatDeadline(o.Deadline)],
+    ['Amount',   esc(o.Amount)],
+    ['Region',   esc(o.Region)],
+    ['Eligibility', esc(o.Eligibility)],
+    ['Applied',  o.Applied === 'TRUE' ? '<span style="color:#4ade80;font-weight:600">✓ Yes</span>' : 'No'],
+    ['Result',   esc(o.Result) || '—'],
+    ['Source',   esc(o.Source)],
+    ['Date Added', esc(o['Date Added'])],
+    ['Notes',    esc(o.Notes)],
+  ];
+
+  document.getElementById('dp-fields').innerHTML =
+    '<hr class="detail-divider">' +
+    fields.map(([k, v]) => `<div class="detail-row"><div class="dk">${k}</div><div class="dv">${v}</div></div>`).join('') +
+    (o.URL ? `<div class="detail-row"><div class="dk">URL</div><div class="dv"><a href="${esc(o.URL)}" target="_blank" rel="noopener">${esc(o.URL)}</a></div></div>` : '');
+
+  // Actions: visit + mark applied
+  const alreadyApplied = o.Applied === 'TRUE';
+  const visitBtn = o.URL
+    ? `<a href="${esc(o.URL)}" target="_blank" rel="noopener" class="btn btn-primary btn-sm">↗ Visit</a>`
+    : '';
+  const appliedBtn = alreadyApplied
+    ? `<button class="btn btn-success btn-sm applied" disabled>✓ Applied</button>`
+    : `<button class="btn btn-success btn-sm" onclick="markApplied('${esc(o.ID)}')">✓ Mark Applied</button>`;
+  document.getElementById('dp-actions').innerHTML = visitBtn + appliedBtn;
+
+  document.getElementById('detail-overlay').classList.add('show');
+}
+
+function openDetailById(id) {
+  const o = allOpps.find(x => x.ID === id);
+  if (o) openDetail(o);
+}
+
+function closeDetail() {
+  document.getElementById('detail-overlay').classList.remove('show');
+}
+
+// ── Add modal ──────────────────────────────────────────────────
+function openAddModal() {
+  document.getElementById('add-form').reset();
+  document.getElementById('form-error').classList.remove('show');
+  document.getElementById('form-success').classList.remove('show');
+  document.getElementById('add-submit').textContent = 'Save Opportunity';
+  document.getElementById('add-overlay').classList.add('show');
+}
+
+function closeAddModal() {
+  document.getElementById('add-overlay').classList.remove('show');
+}
+
+async function handleSubmit(e) {
+  e.preventDefault();
+  const errEl = document.getElementById('form-error');
+  const okEl = document.getElementById('form-success');
+  const btn = document.getElementById('add-submit');
+  errEl.classList.remove('show');
+  okEl.classList.remove('show');
+
+  if (!SCRIPT_URL) {
+    errEl.textContent = 'Apps Script not connected. Deploy appsscript.gs and set SCRIPT_URL in index.html first.';
+    errEl.classList.add('show');
+    return;
+  }
+
+  const fd = new FormData(e.target);
+  const payload = {};
+  fd.forEach((v, k) => { payload[k] = v; });
+
+  btn.textContent = 'Saving…';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    okEl.textContent = `✓ Saved as ${data.id}`;
+    okEl.classList.add('show');
+    btn.textContent = 'Saved!';
+    setTimeout(() => {
+      closeAddModal();
+      fetchFromScript();
+    }, 1200);
+  } catch (err) {
+    errEl.textContent = '✗ ' + err.message;
+    errEl.classList.add('show');
+    btn.textContent = 'Save Opportunity';
+    btn.disabled = false;
+  }
+}
+
+// ── Claude URL panel ───────────────────────────────────────────
+function toggleClaudePanel() {
+  const panel = document.getElementById('claude-panel');
+  panel.classList.toggle('show');
+  if (panel.classList.contains('show')) {
+    document.getElementById('claude-url-input').focus();
+  }
+}
+
+function openWithClaude() {
+  const url = document.getElementById('claude-url-input').value.trim();
+  if (!url) { document.getElementById('claude-url-input').focus(); return; }
+
+  const prompt = `Add this to my lovelee opportunity tracker: ${url}
+
+Please fetch the page, extract: Title, Organization, Type (funding / festival / open-call / event / gig), Status (open / watching / closed), Deadline (yyyy-mm-dd or "rolling"), Amount (grant size or "performance fee" etc), Region, Eligibility requirements, and any key Notes.
+
+Then POST it to the Apps Script: ${SCRIPT_URL || '[set SCRIPT_URL in index.html]'}
+
+Endpoint: POST with JSON body containing the fields above. Also set Priority to "High" if it's a major international festival, significant funding round, or career-defining opportunity — otherwise "Normal".
+
+Confirm what you added when done.`;
+
+  navigator.clipboard.writeText(prompt).then(() => {
+    const copied = document.getElementById('claude-copied');
+    copied.classList.add('show');
+    setTimeout(() => copied.classList.remove('show'), 4000);
+  });
+
+  window.open('https://claude.ai/new', '_blank');
+  document.getElementById('claude-url-input').value = '';
+}
+
+// ── Scan sources ───────────────────────────────────────────────
+async function runScan() {
+  const btn = document.getElementById('scan-btn');
+  if (!SCRIPT_URL) {
+    alert('Deploy appsscript.gs and set SCRIPT_URL first — then Scan Sources will work.');
+    return;
+  }
+  btn.textContent = '⏳ Scanning…';
+  btn.disabled = true;
+  try {
+    const res = await fetch(SCRIPT_URL + '?action=scan');
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    const added = data.added || 0;
+    btn.textContent = added > 0 ? `✓ +${added} new` : '✓ No new';
+    setTimeout(() => { btn.textContent = '⚡ Scan Sources'; btn.disabled = false; }, 3000);
+    if (added > 0) fetchFromScript();
+  } catch (e) {
+    btn.textContent = '✗ Scan failed';
+    btn.disabled = false;
+    console.error(e);
+  }
+}
+
+// ── Helpers ────────────────────────────────────────────────────
+function esc(s) {
+  if (!s) return '';
+  return String(s)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+function parseDeadline(s) {
+  if (!s) return null;
+  const m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return null;
+  return new Date(Number(m[1]), Number(m[2])-1, Number(m[3]));
+}
+
+function formatDeadline(s) {
+  if (!s) return '—';
+  const d = parseDeadline(s);
+  if (!d) return esc(s);
+  return d.toLocaleDateString('de-DE', {day:'2-digit', month:'short', year:'numeric'});
+}
+
+function deadlineClass(s, status) {
+  if (status === 'submitted' || status === 'closed' || status === 'ineligible') return 'deadline-ok';
+  const d = parseDeadline(s);
+  if (!d) return 'deadline-ok';
+  const today = new Date(); today.setHours(0,0,0,0);
+  const diff = Math.ceil((d - today) / 86400000);
+  if (diff < 0)  return 'deadline-past';
+  if (diff <= 7) return 'deadline-urgent';
+  if (diff <= 21) return 'deadline-soon';
+  return 'deadline-ok';
+}
+</script>
+</body>
+</html>
