@@ -1,0 +1,1885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lovelee — Opportunity Tracker</title>
+<style>
+/* ── Tokens ──────────────────────────────────────────────── */
+:root {
+  --bg:       #f8f7fc;
+  --surface:  #ffffff;
+  --s2:       #f2effe;
+  --s3:       #ebe5fb;
+  --b1:       #e8e2f7;
+  --b2:       #cec5ed;
+  --accent:   #7c3aed;
+  --ah:       #6d28d9;
+  --al:       #f3f0ff;
+  --txt:      #1a1625;
+  --muted:    #4a4068;
+  --hint:     #8b7eb5;
+  --red:      #dc2626;
+  --amber:    #d97706;
+  --green:    #16a34a;
+  --gold:     #92400e;
+  --r:        10px;
+  --sh:       0 1px 3px rgba(100,80,180,.07), 0 4px 16px rgba(100,80,180,.06);
+  --sh2:      0 4px 12px rgba(100,80,180,.1), 0 12px 32px rgba(100,80,180,.08);
+  --serif: Georgia, 'Times New Roman', serif;
+  --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --mono: 'JetBrains Mono', 'Fira Mono', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--txt); font-family: var(--sans); line-height: 1.6; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── Shell ───────────────────────────────────────────────── */
+.shell { max-width: 1320px; margin: 0 auto; padding: 0 28px 80px; }
+
+/* ── Header ──────────────────────────────────────────────── */
+header {
+  border-bottom: 1px solid var(--b1);
+  padding: 22px 0 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+}
+.logo {
+  font-family: var(--serif);
+  font-size: 1.55rem;
+  font-weight: 400;
+  letter-spacing: .01em;
+  color: var(--txt);
+}
+.logo span { color: var(--accent); }
+.subtitle { font-size: .72rem; color: var(--hint); letter-spacing: .06em; margin-top: 3px; text-transform: uppercase; }
+.header-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+#last-updated { font-size: .72rem; color: var(--hint); margin-right: 2px; }
+
+/* ── Buttons ─────────────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 8px 16px; border-radius: 8px; font-size: .82rem;
+  font-family: var(--sans); font-weight: 500; border: none;
+  transition: all .15s; white-space: nowrap; cursor: pointer;
+}
+.btn-primary { background: var(--accent); color: #fff; box-shadow: 0 1px 4px rgba(124,58,237,.25); }
+.btn-primary:hover { background: var(--ah); box-shadow: 0 2px 8px rgba(109,40,217,.35); }
+.btn-ghost { background: var(--surface); color: var(--muted); border: 1px solid var(--b2); }
+.btn-ghost:hover { color: var(--accent); border-color: var(--accent); background: var(--al); }
+.btn-green { background: #f0fdf4; color: var(--green); border: 1px solid #bbf7d0; }
+.btn-green:hover { background: #dcfce7; border-color: #86efac; }
+.btn-green.done { opacity: .65; cursor: default; }
+.btn-sm { padding: 6px 12px; font-size: .78rem; }
+.btn-xs { padding: 4px 10px; font-size: .73rem; }
+
+/* ── Banners ─────────────────────────────────────────────── */
+.banner {
+  background: var(--al); border: 1px solid #c4b5fd;
+  border-radius: var(--r); padding: 14px 18px;
+  margin-bottom: 18px; display: none; font-size: .84rem;
+}
+.banner.show { display: block; }
+.banner strong { color: var(--accent); }
+.banner p { color: var(--muted); margin-top: 3px; font-size: .8rem; }
+
+/* ── Claude panel ────────────────────────────────────────── */
+.claude-panel {
+  background: var(--al); border: 1px solid #c4b5fd;
+  border-radius: var(--r); padding: 16px 20px;
+  margin-bottom: 20px; display: none; gap: 10px; flex-direction: column;
+}
+.claude-panel.show { display: flex; }
+.claude-panel-title { font-size: .8rem; color: var(--accent); font-weight: 600; }
+.claude-panel-desc  { font-size: .77rem; color: var(--muted); line-height: 1.5; }
+.claude-url-row { display: flex; gap: 8px; }
+.claude-url-row input { flex: 1; }
+.claude-copied { font-size: .72rem; color: var(--green); display: none; align-self: center; }
+.claude-copied.show { display: block; }
+
+/* ── Inputs ──────────────────────────────────────────────── */
+input, select, textarea {
+  background: var(--surface); border: 1px solid var(--b2);
+  color: var(--txt); font-family: var(--sans); font-size: .85rem;
+  border-radius: 8px; padding: 8px 12px; outline: none; width: 100%;
+  transition: border-color .15s, box-shadow .15s;
+}
+input[type="search"] { padding-left: 34px; }
+input:focus, select:focus, textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(124,58,237,.1);
+}
+select option { background: var(--surface); }
+
+/* ── Stats row ───────────────────────────────────────────── */
+.stats-row {
+  display: flex; gap: 12px; margin-bottom: 32px;
+  overflow-x: auto; padding-bottom: 4px;
+}
+.stat {
+  background: var(--surface); border: 1px solid var(--b1);
+  border-radius: var(--r); padding: 16px 20px; min-width: 110px;
+  flex-shrink: 0; box-shadow: var(--sh); transition: box-shadow .15s, border-color .15s;
+}
+.stat:hover { box-shadow: var(--sh2); border-color: var(--b2); }
+.stat-val {
+  font-family: var(--serif); font-size: 2.1rem;
+  color: var(--txt); line-height: 1; font-weight: 400;
+}
+.stat-lbl { font-size: .68rem; color: var(--hint); text-transform: uppercase; letter-spacing: .06em; margin-top: 5px; }
+.stat.accent { border-color: #c4b5fd; background: var(--al); }
+.stat.accent .stat-val { color: var(--accent); }
+.stat.gold { border-color: #fde68a; background: #fffbeb; }
+.stat.gold .stat-val { color: var(--gold); }
+.stat.green { border-color: #bbf7d0; background: #f0fdf4; }
+.stat.green .stat-val { color: var(--green); }
+
+/* ── Sections ────────────────────────────────────────────── */
+.section { margin-bottom: 36px; }
+.section-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 12px; margin-bottom: 16px; padding-bottom: 12px;
+  border-bottom: 1px solid var(--b1);
+}
+.section-title {
+  font-family: var(--serif); font-size: 1.15rem;
+  font-weight: 400; color: var(--txt); letter-spacing: .01em;
+}
+.section-sub { font-size: .75rem; color: var(--hint); }
+
+/* ── Collapsible sections ────────────────────────────────── */
+.section-toggle-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: none; border: 1px solid var(--b2); color: var(--hint);
+  font-size: .73rem; padding: 5px 11px; border-radius: 6px;
+  cursor: pointer; transition: all .15s; font-family: var(--sans); white-space: nowrap;
+}
+.section-toggle-btn:hover { color: var(--accent); border-color: var(--accent); background: var(--al); }
+.section-toggle-btn.active { background: var(--al); color: var(--accent); border-color: var(--accent); }
+.collapsible.collapsed { display: none !important; }
+.radio-country-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 11px 20px; background: var(--s2); border-bottom: 1px solid var(--b1);
+  font-size: .7rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .07em; color: var(--hint); cursor: pointer; user-select: none;
+  transition: background .1s;
+}
+.radio-country-header:hover { background: var(--s3); color: var(--muted); }
+.radio-country-header .chevron { font-size: .65rem; transition: transform .2s; }
+.radio-country-header.collapsed-group .chevron { transform: rotate(-90deg); }
+.radio-country-rows.collapsed { display: none; }
+
+/* ── Opportunity cards ───────────────────────────────────── */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 14px;
+}
+.opp-card {
+  background: var(--surface); border: 1px solid var(--b1);
+  border-radius: 12px; padding: 20px 22px;
+  box-shadow: var(--sh); transition: box-shadow .2s, border-color .2s, transform .2s;
+  cursor: pointer; position: relative; overflow: hidden;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.opp-card:hover { box-shadow: var(--sh2); border-color: var(--b2); transform: translateY(-2px); }
+.opp-card.urgent  { border-left: 3px solid var(--red); }
+.opp-card.soon    { border-left: 3px solid var(--amber); }
+.opp-card.high    { border-left: 3px solid var(--accent); }
+
+.card-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.card-title {
+  font-family: var(--serif); font-size: 1.02rem;
+  font-weight: 400; color: var(--txt); line-height: 1.3;
+}
+.card-org { font-size: .75rem; color: var(--hint); margin-top: 3px; }
+.card-info {
+  display: flex; gap: 16px; font-size: .78rem;
+  color: var(--muted); flex-wrap: wrap;
+}
+.card-info .ci { display: flex; align-items: center; gap: 5px; }
+.card-info .ci-val { color: var(--txt); font-weight: 500; }
+.ci-val.urgent { color: var(--red); font-weight: 700; }
+.ci-val.soon   { color: var(--amber); font-weight: 600; }
+.card-actions { display: flex; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
+
+.empty-section {
+  padding: 24px; background: var(--surface); border: 1px dashed var(--b2);
+  border-radius: var(--r); color: var(--hint); font-size: .85rem;
+  text-align: center;
+}
+
+/* ── Badges ──────────────────────────────────────────────── */
+.badge {
+  display: inline-block; padding: 2px 9px; border-radius: 20px;
+  font-size: .67rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .05em; white-space: nowrap;
+}
+.badge-open       { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+.badge-submitted  { background: var(--al); color: var(--accent); border: 1px solid #c4b5fd; }
+.badge-watching   { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+.badge-closed     { background: #f3f4f6; color: #6b7280; border: 1px solid #e5e7eb; }
+.badge-ineligible { background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; }
+
+.type-badge {
+  display: inline-block; padding: 2px 8px; border-radius: 5px;
+  font-size: .65rem; font-weight: 500; text-transform: uppercase;
+  letter-spacing: .04em; white-space: nowrap;
+}
+.type-funding   { background: #f3f0ff; color: #5b21b6; }
+.type-festival  { background: #fff7ed; color: #c2410c; }
+.type-event     { background: #ecfeff; color: #0e7490; }
+.type-gig       { background: #fdf4ff; color: #86198f; }
+.type-open-call { background: #f0fdf4; color: #166534; }
+.type-radio     { background: #fff7ed; color: #9a3412; }
+
+.prio-badge {
+  display: inline-block; padding: 2px 8px; border-radius: 5px;
+  font-size: .65rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .04em; background: #fef3c7; color: var(--gold);
+  border: 1px solid #fde68a;
+}
+
+/* ── Watching section ────────────────────────────────────── */
+.watching-list {
+  background: var(--surface); border: 1px solid var(--b1);
+  border-radius: var(--r); overflow: hidden; box-shadow: var(--sh);
+}
+.watching-row {
+  display: flex; align-items: center; gap: 12px; padding: 10px 18px;
+  border-bottom: 1px solid var(--b1); font-size: .8rem; transition: background .1s;
+}
+.watching-row:last-child { border-bottom: none; }
+.watching-row:hover { background: var(--s2); }
+.watching-title { flex: 1; color: var(--txt); font-weight: 500; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.watching-org   { color: var(--hint); font-size: .73rem; min-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.watching-dl    { color: var(--hint); font-size: .73rem; font-family: var(--mono); min-width: 90px; text-align: right; white-space: nowrap; }
+.watching-dl.soon   { color: var(--amber); font-weight: 600; }
+.watching-summary {
+  padding: 12px 18px; background: var(--s2); font-size: .75rem;
+  color: var(--hint); border-bottom: 1px solid var(--b1);
+  display: flex; justify-content: space-between; align-items: center;
+}
+
+/* ── Radio section ───────────────────────────────────────── */
+.radio-list {
+  background: var(--surface); border: 1px solid var(--b1);
+  border-radius: var(--r); overflow: hidden; box-shadow: var(--sh);
+}
+.radio-row {
+  display: flex; align-items: center; gap: 14px; padding: 14px 20px;
+  border-bottom: 1px solid var(--b1); transition: background .1s;
+}
+.radio-row:last-child { border-bottom: none; }
+.radio-row:hover { background: var(--s2); }
+.radio-icon { font-size: 1.1rem; flex-shrink: 0; }
+.radio-main { flex: 1; min-width: 0; }
+.radio-name { font-weight: 600; font-size: .88rem; color: var(--txt); }
+.radio-meta { font-size: .74rem; color: var(--hint); margin-top: 2px; }
+.radio-status { text-align: right; font-size: .75rem; color: var(--hint); flex-shrink: 0; min-width: 130px; }
+.radio-status .played { color: var(--green); font-weight: 600; }
+.radio-status .no-resp { color: var(--hint); }
+.radio-status .declined { color: var(--red); }
+.radio-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+.radio-section-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 20px; background: var(--s2); border-bottom: 1px solid var(--b1);
+  font-size: .7rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .07em; color: var(--hint);
+}
+
+/* ── Newsletter section ──────────────────────────────────── */
+.newsletter-list {
+  background: var(--surface); border: 1px solid var(--b1);
+  border-radius: var(--r); overflow: hidden; box-shadow: var(--sh);
+}
+.newsletter-row {
+  display: flex; align-items: center; gap: 12px; padding: 11px 18px;
+  border-bottom: 1px solid var(--b1); font-size: .82rem; transition: background .1s;
+}
+.newsletter-row:last-child { border-bottom: none; }
+.newsletter-row:hover { background: var(--s2); }
+.newsletter-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); flex-shrink: 0; cursor: pointer; }
+.newsletter-row.done { opacity: .55; }
+.newsletter-row.done .newsletter-name { text-decoration: line-through; }
+.newsletter-name { flex: 1; font-weight: 500; color: var(--txt); }
+.newsletter-note { font-size: .72rem; color: var(--hint); min-width: 160px; text-align: right; }
+.newsletter-progress {
+  padding: 10px 18px; background: var(--s2); font-size: .73rem; color: var(--hint);
+  border-bottom: 1px solid var(--b1); display: flex; justify-content: space-between; align-items: center;
+}
+.manual-row {
+  display: flex; align-items: center; gap: 10px; padding: 12px 18px;
+  border-bottom: 1px solid var(--b1); font-size: .82rem; transition: background .1s;
+  flex-wrap: wrap;
+}
+.manual-row:last-child { border-bottom: none; }
+.manual-row:hover { background: var(--s2); }
+.manual-row.overdue { background: #fffbeb; border-left: 3px solid var(--amber); }
+.manual-row.overdue:hover { background: #fef9e7; }
+.manual-name { flex: 1; font-weight: 500; color: var(--txt); min-width: 160px; }
+.manual-age  { font-size: .72rem; color: var(--hint); white-space: nowrap; }
+.manual-age.overdue { color: var(--amber); font-weight: 600; }
+
+/* ── Browse all (table) ──────────────────────────────────── */
+.browse-toggle-row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px;
+}
+.controls {
+  display: flex; flex-wrap: wrap; gap: 10px;
+  margin-bottom: 14px; align-items: center;
+}
+.search-wrap { flex: 1; min-width: 180px; position: relative; }
+.search-wrap svg {
+  position: absolute; left: 10px; top: 50%;
+  transform: translateY(-50%); color: var(--hint); pointer-events: none;
+}
+.filter-group { display: flex; gap: 8px; flex-wrap: wrap; }
+.filter-group select { width: auto; min-width: 130px; }
+#count-label { font-size: .74rem; color: var(--hint); white-space: nowrap; }
+
+.table-wrap {
+  background: var(--surface); border: 1px solid var(--b1);
+  border-radius: var(--r); overflow: auto; box-shadow: var(--sh);
+}
+table { width: 100%; border-collapse: collapse; font-size: .84rem; }
+thead tr { border-bottom: 1px solid var(--b1); }
+th {
+  padding: 10px 16px; text-align: left; font-size: .68rem;
+  font-weight: 600; text-transform: uppercase; letter-spacing: .07em;
+  color: var(--hint); white-space: nowrap; background: var(--s2);
+  position: sticky; top: 0; z-index: 1; cursor: pointer; user-select: none;
+}
+th:hover { color: var(--muted); }
+th .si { opacity: .4; margin-left: 4px; font-size: .62rem; }
+th.sort-asc .si::after  { content: '↑'; opacity: 1; color: var(--accent); }
+th.sort-desc .si::after { content: '↓'; opacity: 1; color: var(--accent); }
+th:not(.sort-asc):not(.sort-desc) .si::after { content: '↕'; }
+tbody tr { border-bottom: 1px solid var(--b1); transition: background .1s; }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: var(--al); cursor: pointer; }
+tbody tr.high-row { background: #fffdf5; }
+tbody tr.high-row:hover { background: #fef9e7; }
+td { padding: 11px 16px; vertical-align: middle; }
+.tc-title { font-weight: 600; color: var(--txt); min-width: 200px; max-width: 300px; font-size: .86rem; }
+.tc-title .org-sub { display: block; font-size: .73rem; color: var(--hint); font-weight: 400; margin-top: 2px; }
+.tc-deadline { white-space: nowrap; font-family: var(--mono); font-size: .78rem; min-width: 115px; }
+.tc-amount   { color: var(--accent); font-family: var(--mono); font-size: .78rem; font-weight: 600; min-width: 120px; max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tc-notes    { color: var(--muted); font-size: .77rem; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dl-urgent { color: var(--red); font-weight: 700; }
+.dl-soon   { color: var(--amber); font-weight: 600; }
+.dl-ok     { color: var(--muted); }
+.dl-past   { color: var(--hint); text-decoration: line-through; }
+
+/* ── Loading ─────────────────────────────────────────────── */
+.loading {
+  display: flex; align-items: center; justify-content: center;
+  padding: 48px; gap: 12px; color: var(--hint); font-size: .84rem;
+}
+.spinner {
+  width: 18px; height: 18px; border: 2px solid var(--b1);
+  border-top-color: var(--accent); border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.empty-state { padding: 48px 24px; text-align: center; color: var(--hint); }
+.empty-state h3 { font-family: var(--serif); font-weight: 400; font-size: 1.05rem; color: var(--muted); margin-bottom: 6px; }
+
+/* ── Modal ───────────────────────────────────────────────── */
+.overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(20,15,40,.3); backdrop-filter: blur(3px);
+  z-index: 100; align-items: center; justify-content: center; padding: 24px;
+}
+.overlay.show { display: flex; }
+.modal {
+  background: var(--surface); border: 1px solid var(--b1);
+  box-shadow: 0 8px 48px rgba(100,80,180,.18);
+  border-radius: 14px; width: 100%; max-width: 560px;
+  max-height: 90vh; overflow-y: auto; padding: 28px; position: relative;
+}
+.modal h2 { font-family: var(--serif); font-size: 1.2rem; font-weight: 400; margin-bottom: 22px; }
+.modal-close {
+  position: absolute; top: 18px; right: 20px;
+  background: none; border: none; color: var(--hint); font-size: 1.1rem;
+  padding: 4px 8px; border-radius: 4px; cursor: pointer; transition: color .15s;
+}
+.modal-close:hover { color: var(--txt); }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.form-grid .full { grid-column: 1 / -1; }
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field label { font-size: .7rem; color: var(--hint); text-transform: uppercase; letter-spacing: .06em; font-weight: 500; }
+.form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+.form-error   { color: var(--red); font-size: .78rem; margin-top: 8px; display: none; }
+.form-error.show { display: block; }
+.form-success { color: var(--green); font-size: .78rem; margin-top: 8px; display: none; }
+.form-success.show { display: block; }
+
+/* ── Detail panel ────────────────────────────────────────── */
+.detail-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(20,15,40,.2); backdrop-filter: blur(2px);
+  z-index: 100; justify-content: flex-end;
+}
+.detail-overlay.show { display: flex; }
+.detail-panel {
+  background: var(--surface); border-left: 1px solid var(--b1);
+  box-shadow: -4px 0 32px rgba(100,80,180,.1);
+  width: 100%; max-width: 420px; height: 100%;
+  overflow-y: auto; padding: 28px 24px; position: relative;
+}
+.detail-panel h2 { font-family: var(--serif); font-size: 1.1rem; font-weight: 400; padding-right: 32px; line-height: 1.3; margin-bottom: 4px; }
+.detail-panel .dp-org { font-size: .78rem; color: var(--hint); margin-bottom: 20px; }
+.detail-close {
+  position: absolute; top: 18px; right: 20px; background: none;
+  border: none; color: var(--hint); font-size: 1.1rem; padding: 4px 8px;
+  border-radius: 4px; cursor: pointer; transition: color .15s;
+}
+.detail-close:hover { color: var(--txt); }
+.dp-divider { border: none; border-top: 1px solid var(--b1); margin: 16px 0; }
+.dp-row { display: flex; gap: 12px; margin-bottom: 11px; font-size: .8rem; }
+.dp-k { color: var(--hint); min-width: 110px; font-size: .7rem; text-transform: uppercase; letter-spacing: .05em; padding-top: 1px; flex-shrink: 0; }
+.dp-v { color: var(--txt); flex: 1; word-break: break-word; }
+.dp-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 20px; }
+
+/* ── Footer ──────────────────────────────────────────────── */
+footer {
+  border-top: 1px solid var(--b1); padding: 16px 0; margin-top: 24px;
+  font-size: .76rem; color: var(--hint);
+  display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+}
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 700px) {
+  .form-grid { grid-template-columns: 1fr; }
+  .form-grid .full { grid-column: 1; }
+  .card-grid { grid-template-columns: 1fr; }
+  th, td { padding: 8px 10px; }
+  .radio-status { display: none; }
+}
+</style>
+</head>
+<body>
+
+<script>
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxltNHyYcp6Qg1zVMg2DM901oNnymXS_RNM2E3-E3JN2rfXMNFTufYl5eMxVVjPwed5/exec';
+</script>
+
+<div class="shell">
+
+<!-- Header -->
+<header>
+  <div>
+    <div class="logo">lovelee <span>·</span> Opportunities</div>
+    <div class="subtitle">Funding · Festivals · Open Calls · Radio</div>
+  </div>
+  <div class="header-actions">
+    <span id="last-updated"></span>
+    <button class="btn btn-ghost btn-sm" id="refresh-btn">⟳ Refresh</button>
+    <button class="btn btn-ghost btn-sm" id="scan-btn">⚡ Scan sources</button>
+    <button class="btn btn-ghost btn-sm" id="morning-btn">☀️ Morning briefing</button>
+    <button class="btn btn-ghost btn-sm" id="pdf-btn">📄 Add from PDF</button>
+    <button class="btn btn-ghost btn-sm" id="claude-btn">🤖 Add via Claude</button>
+    <button class="btn btn-primary" id="add-btn">+ Add</button>
+  </div>
+</header>
+
+<!-- Claude panel -->
+<div class="claude-panel" id="claude-panel">
+  <div class="claude-panel-title">🤖 Add opportunity via Claude</div>
+  <div class="claude-panel-desc">Paste any URL — festival, funding page, open call, radio station. Claude reads the page, extracts all details, and adds it to your Sheet.</div>
+  <div class="claude-url-row">
+    <input type="url" id="claude-url-input" placeholder="https://  — paste any URL here">
+    <button class="btn btn-primary btn-sm" id="claude-send-btn">📋 Copy prompt for Claude Code</button>
+    <span class="claude-copied" id="claude-copied">✓ Prompt copied — paste into Claude Code</span>
+  </div>
+</div>
+
+<!-- Setup banner -->
+<div class="banner" id="setup-banner">
+  <strong>⚡ Not connected.</strong>
+  <p>Showing seed data. Deploy <code>appsscript.gs</code>, set <code>SCRIPT_URL</code>, and redeploy to connect live data.</p>
+</div>
+
+<!-- Stats -->
+<div class="stats-row" id="stats-row">
+  <div class="stat accent"><div class="stat-val" id="stat-total">—</div><div class="stat-lbl">Total</div></div>
+  <div class="stat"><div class="stat-val" id="stat-open">—</div><div class="stat-lbl">Open</div></div>
+  <div class="stat"><div class="stat-val" id="stat-submitted">—</div><div class="stat-lbl">Applied</div></div>
+  <div class="stat gold"><div class="stat-val" id="stat-high">—</div><div class="stat-lbl">⭐ High priority</div></div>
+  <div class="stat accent"><div class="stat-val" id="stat-urgent">—</div><div class="stat-lbl">Due ≤ 30 days</div></div>
+  <div class="stat"><div class="stat-val" id="stat-funding">—</div><div class="stat-lbl">Funding</div></div>
+  <div class="stat"><div class="stat-val" id="stat-festival">—</div><div class="stat-lbl">Festivals</div></div>
+</div>
+
+<!-- Loading state -->
+<div class="loading" id="main-loading"><div class="spinner"></div>Loading opportunities…</div>
+
+<!-- Dashboard (hidden until data loads) -->
+<div id="dashboard" style="display:none">
+
+  <!-- Action needed -->
+  <section class="section" id="action-section">
+    <div class="section-head">
+      <div class="section-title">⚡ Action needed</div>
+      <div class="section-sub" id="action-sub"></div>
+    </div>
+    <div class="card-grid" id="action-cards"></div>
+    <div class="empty-section" id="action-empty" style="display:none">
+      Nothing urgent right now — you're on top of it.
+    </div>
+  </section>
+
+  <!-- High priority -->
+  <section class="section" id="highlights-section">
+    <div class="section-head">
+      <div>
+        <div class="section-title">⭐ Significant opportunities</div>
+        <div class="section-sub" id="highlights-sub"></div>
+      </div>
+      <button class="section-toggle-btn" id="highlights-toggle" onclick="toggleHighlights()">Show ↓</button>
+    </div>
+    <div class="card-grid collapsible collapsed" id="highlight-cards"></div>
+  </section>
+
+  <!-- Watching -->
+  <section class="section" id="watching-section">
+    <div class="section-head">
+      <div>
+        <div class="section-title">👁 On the radar</div>
+        <div class="section-sub" id="watching-sub"></div>
+      </div>
+      <button class="section-toggle-btn" id="watching-toggle" onclick="toggleWatching()">Show ↓</button>
+    </div>
+    <div class="watching-list collapsible collapsed" id="watching-list"></div>
+  </section>
+
+  <!-- Radio submissions -->
+  <section class="section" id="radio-section">
+    <div class="section-head">
+      <div>
+        <div class="section-title">📻 Radio submissions</div>
+        <div class="section-sub">Submit your track on every new release</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button class="section-toggle-btn" id="radio-high-btn" onclick="toggleRadioHighOnly()">⭐ High only</button>
+        <button class="section-toggle-btn" id="radio-toggle-btn" onclick="toggleRadioSection()">Show ↓</button>
+      </div>
+    </div>
+    <div class="radio-list collapsible collapsed" id="radio-list">
+      <div class="loading" id="radio-loading"><div class="spinner"></div>Loading stations…</div>
+    </div>
+  </section>
+
+  <!-- Browse all -->
+  <section class="section">
+    <div class="section-head browse-toggle-row">
+      <div class="section-title">📋 All opportunities</div>
+      <button class="btn btn-ghost btn-sm" id="browse-toggle">Show all ↓</button>
+    </div>
+    <div id="browse-wrap" style="display:none">
+      <div class="controls">
+        <div class="search-wrap">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input type="search" id="search" placeholder="Search title, org, notes…">
+        </div>
+        <div class="filter-group">
+          <select id="filter-type">
+            <option value="">All types</option>
+            <option>funding</option><option>festival</option>
+            <option>event</option><option>gig</option>
+            <option>open-call</option><option>radio</option>
+          </select>
+          <select id="filter-status">
+            <option value="">All statuses</option>
+            <option>open</option><option>submitted</option>
+            <option>watching</option><option>closed</option><option>ineligible</option>
+          </select>
+          <select id="filter-region">
+            <option value="">All regions</option>
+            <option>Germany</option><option>Germany / Berlin</option>
+            <option>International</option><option>EU / Germany</option>
+            <option>Netherlands</option><option>Austria</option>
+            <option>Portugal</option><option>France</option>
+            <option>UK</option><option>USA</option>
+          </select>
+        </div>
+        <span id="count-label"></span>
+      </div>
+      <div class="table-wrap" id="table-wrap">
+        <table id="opp-table">
+          <thead><tr>
+            <th data-col="Title">Opportunity<span class="si"></span></th>
+            <th data-col="Type">Type<span class="si"></span></th>
+            <th data-col="Status">Status<span class="si"></span></th>
+            <th data-col="Deadline">Deadline<span class="si"></span></th>
+            <th data-col="Amount">Amount<span class="si"></span></th>
+            <th data-col="Notes">Notes<span class="si"></span></th>
+          </tr></thead>
+          <tbody id="opp-tbody"></tbody>
+        </table>
+        <div class="empty-state" id="empty-state" style="display:none">
+          <h3>No opportunities match your filters.</h3>
+          <p>Try adjusting the search or filters above.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Newsletters -->
+  <section class="section" id="newsletter-section">
+    <div class="section-head">
+      <div>
+        <div class="section-title">📧 Sources & newsletters</div>
+        <div class="section-sub" id="newsletter-sub">Sign up once — Claude scans your inbox for open calls automatically</div>
+      </div>
+      <button class="section-toggle-btn" id="newsletter-toggle" onclick="toggleNewsletter()">Show ↓</button>
+    </div>
+    <div class="newsletter-list collapsible collapsed" id="newsletter-list"></div>
+  </section>
+
+</div><!-- /#dashboard -->
+</div><!-- /.shell -->
+
+<div class="shell" style="padding-top:0">
+  <footer>
+    <span>lovelee_opportunities · <a href="https://docs.google.com/spreadsheets/d/1Si1_GF1DVPq7ZNfH5NPOxQaH6gJDtiDDbqTUYT7kQg4/edit" target="_blank">↗ Open Google Sheet</a></span>
+    <span id="footer-count"></span>
+  </footer>
+</div>
+
+<!-- Add Opportunity Modal -->
+<div class="overlay" id="add-overlay">
+  <div class="modal">
+    <button class="modal-close" id="add-close">✕</button>
+    <h2>Add Opportunity</h2>
+    <form id="add-form" autocomplete="off">
+      <div class="form-grid">
+        <div class="field full"><label>Title *</label><input type="text" name="Title" required placeholder="e.g. Round 74 Popmusik"></div>
+        <div class="field"><label>Organisation *</label><input type="text" name="Organization" required placeholder="e.g. Initiative Musik"></div>
+        <div class="field"><label>Type *</label>
+          <select name="Type" required>
+            <option value="">— select —</option>
+            <option>funding</option><option>festival</option>
+            <option>event</option><option>gig</option>
+            <option>open-call</option><option>radio</option>
+          </select>
+        </div>
+        <div class="field"><label>Status *</label>
+          <select name="Status" required>
+            <option value="">— select —</option>
+            <option>open</option><option>watching</option>
+            <option>submitted</option><option>closed</option><option>ineligible</option>
+          </select>
+        </div>
+        <div class="field"><label>Priority</label>
+          <select name="Priority">
+            <option value="Normal">Normal</option>
+            <option value="High">⭐ High</option>
+            <option value="Low">Low</option>
+          </select>
+        </div>
+        <div class="field"><label>Deadline</label><input type="text" name="Deadline" placeholder="yyyy-mm-dd or rolling"></div>
+        <div class="field"><label>Amount</label><input type="text" name="Amount" placeholder="e.g. €3,500"></div>
+        <div class="field"><label>Region</label><input type="text" name="Region" placeholder="e.g. Germany / Berlin"></div>
+        <div class="field"><label>Source</label><input type="text" name="Source" placeholder="e.g. Musicboard Berlin"></div>
+        <div class="field full"><label>URL</label><input type="url" name="URL" placeholder="https://…"></div>
+        <div class="field full"><label>Eligibility</label><input type="text" name="Eligibility" placeholder="e.g. Berlin residence, GEMA member"></div>
+        <div class="field full"><label>Notes</label><textarea name="Notes" rows="3" placeholder="Any additional notes…"></textarea></div>
+      </div>
+      <div class="form-error" id="form-error"></div>
+      <div class="form-success" id="form-success"></div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-ghost" id="add-cancel">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="add-submit">Save Opportunity</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Prompt modal (radio submission fallback) -->
+<div class="overlay" id="prompt-overlay">
+  <div class="modal" style="max-width:580px;width:94%">
+    <button class="modal-close" onclick="document.getElementById('prompt-overlay').classList.remove('show')">✕</button>
+    <h2 id="prompt-modal-title">Claude prompt — copy & paste</h2>
+    <p style="font-size:.8rem;color:var(--hint);margin-bottom:10px">Copy this prompt → paste into <strong>Claude Code</strong> (the desktop CLI app, not claude.ai — Claude Code can call the API and send emails directly).</p>
+    <textarea id="prompt-modal-text" readonly style="width:100%;height:220px;font-size:.78rem;font-family:monospace;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--txt);resize:vertical"></textarea>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn btn-primary" onclick="selectPromptText()">Select all</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('prompt-overlay').classList.remove('show')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- PDF / document modal -->
+<div class="overlay" id="pdf-overlay">
+  <div class="modal" style="max-width:620px;width:94%">
+    <button class="modal-close" onclick="document.getElementById('pdf-overlay').classList.remove('show')">✕</button>
+    <h2>📄 Add from PDF or document</h2>
+
+    <!-- Tab toggle -->
+    <div style="display:flex;gap:0;margin-bottom:16px;border:1px solid var(--b2);border-radius:8px;overflow:hidden">
+      <button id="pdf-tab-text"  onclick="setPdfTab('text')"  style="flex:1;padding:8px;border:none;background:var(--accent);color:#fff;font-size:.78rem;font-weight:600;cursor:pointer">Text PDF (paste text)</button>
+      <button id="pdf-tab-url"   onclick="setPdfTab('url')"   style="flex:1;padding:8px;border:none;background:var(--surface);color:var(--muted);font-size:.78rem;font-weight:600;cursor:pointer">PDF URL (link)</button>
+      <button id="pdf-tab-image" onclick="setPdfTab('image')" style="flex:1;padding:8px;border:none;background:var(--surface);color:var(--muted);font-size:.78rem;font-weight:600;cursor:pointer">Image PDF (drag in)</button>
+    </div>
+
+    <!-- Hint -->
+    <p style="font-size:.75rem;color:var(--hint);margin-bottom:12px">Copy the generated prompt → paste into <strong>Claude Code</strong> (not claude.ai — Claude Code can POST directly to the tracker).</p>
+
+    <!-- Text tab -->
+    <div id="pdf-panel-text">
+      <p style="font-size:.8rem;color:var(--hint);margin-bottom:10px">Open the PDF → select all (Cmd+A) → copy (Cmd+C) → paste below.</p>
+      <div class="field">
+        <label>Paste document text here</label>
+        <textarea id="pdf-text" rows="8" placeholder="Paste the full text from the PDF, email, or webpage…" style="resize:vertical;margin-top:6px"></textarea>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">
+        <button class="btn btn-ghost" onclick="document.getElementById('pdf-overlay').classList.remove('show')">Cancel</button>
+        <button class="btn btn-primary" onclick="generatePdfPrompt()">Generate prompt →</button>
+      </div>
+    </div>
+
+    <!-- URL tab -->
+    <div id="pdf-panel-url" style="display:none">
+      <p style="font-size:.8rem;color:var(--hint);margin-bottom:10px">Paste a direct PDF link (e.g. the Musicpool Berlin Padlet export URL). Claude Code will fetch and read it.</p>
+      <div class="field">
+        <label>PDF URL</label>
+        <input type="url" id="pdf-url-input" placeholder="https://…" style="margin-top:6px">
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">
+        <button class="btn btn-ghost" onclick="document.getElementById('pdf-overlay').classList.remove('show')">Cancel</button>
+        <button class="btn btn-primary" onclick="generateUrlPdfPrompt()">Generate prompt →</button>
+      </div>
+    </div>
+
+    <!-- Image tab -->
+    <div id="pdf-panel-image" style="display:none">
+      <p style="font-size:.8rem;color:var(--hint);margin-bottom:12px">For PDFs with images, graphics, or scanned pages — drag the file into Claude Code or claude.ai. Copy the prompt below first, then paste it after you drop the file.</p>
+      <div style="background:var(--s2);border:1px solid var(--b1);border-radius:8px;padding:14px;font-size:.78rem;font-family:monospace;color:var(--txt);line-height:1.6;margin-bottom:12px;white-space:pre-wrap" id="pdf-image-prompt"></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary" onclick="copyImagePdfPrompt()">Copy prompt</button>
+        <button class="btn btn-ghost" style="margin-left:auto" onclick="document.getElementById('pdf-overlay').classList.remove('show')">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Detail panel -->
+<div class="detail-overlay" id="detail-overlay">
+  <div class="detail-panel">
+    <button class="detail-close" id="detail-close">✕</button>
+    <h2 id="dp-title"></h2>
+    <div class="dp-org" id="dp-org"></div>
+    <div id="dp-fields"></div>
+    <div class="dp-actions" id="dp-actions"></div>
+  </div>
+</div>
+
+<script>
+// ── Seed data ─────────────────────────────────────────────────
+const SEED = [
+  {ID:"OPP001",Title:"Round 73 Popmusik",Organization:"Initiative Musik",Type:"funding",Status:"submitted",Deadline:"2026-04-30",Amount:"€8,750",Region:"Germany",Eligibility:"Berlin residence, GEMA, KSK",URL:"https://www.initiative-musik.de",Notes:"Applied Round 73",Source:"Initiative Musik","Date Added":"2026-05-08","Date Updated":"2026-05-08",Applied:"TRUE",Result:"",Priority:"High"},
+  {ID:"OPP002",Title:"Support Tour Funding 2026",Organization:"Musicboard Berlin",Type:"funding",Status:"open",Deadline:"2026-11-30",Amount:"up to €3,500",Region:"Germany / Berlin",Eligibility:"Berlin residence, GEMA",URL:"https://www.musicboard-berlin.de",Notes:"Rolling submissions",Source:"Musicboard Berlin","Date Added":"2026-05-08","Date Updated":"2026-05-08",Applied:"FALSE",Result:"",Priority:"Normal"},
+  {ID:"OPP003",Title:"Music Ambassador Programm 2026",Organization:"Berlin Music Commission",Type:"funding",Status:"open",Deadline:"2026-05-28",Amount:"travel costs",Region:"Germany / Berlin",Eligibility:"Berlin residence",URL:"https://www.berlin-music-commission.de",Notes:"Deadline May 28",Source:"Berlin Music Commission","Date Added":"2026-05-08","Date Updated":"2026-05-08",Applied:"FALSE",Result:"",Priority:"Normal"},
+  {ID:"OPP004",Title:"GEMA Basisförderung",Organization:"GEMA",Type:"funding",Status:"open",Deadline:"2026-05-17",Amount:"€2,000",Region:"Germany",Eligibility:"GEMA member",URL:"https://www.gema.de/kulturfoerderung-online",Notes:"First 400 approved. Deadline May 17.",Source:"GEMA","Date Added":"2026-05-08","Date Updated":"2026-05-08",Applied:"FALSE",Result:"",Priority:"Normal"},
+  {ID:"OPP006",Title:"International Live and Showcase Funding",Organization:"Initiative Musik",Type:"funding",Status:"watching",Deadline:"rolling",Amount:"variable",Region:"International",Eligibility:"Berlin residence, GEMA",URL:"https://www.initiative-musik.de",Notes:"Rolling deadline",Source:"Initiative Musik","Date Added":"2026-05-08","Date Updated":"2026-05-08",Applied:"FALSE",Result:"",Priority:"High"},
+  {ID:"OPP007",Title:"International Export Funding",Organization:"Initiative Musik",Type:"funding",Status:"watching",Deadline:"2-3 rounds/year",Amount:"up to €20,000",Region:"International",Eligibility:"Berlin residence, GEMA",URL:"https://www.initiative-musik.de",Notes:"2-3 rounds per year",Source:"Initiative Musik","Date Added":"2026-05-08","Date Updated":"2026-05-08",Applied:"FALSE",Result:"",Priority:"High"},
+  {ID:"OPP008",Title:"WOMEX 2026 Delegate",Organization:"German Music Export",Type:"event",Status:"watching",Deadline:"2026-06-08",Amount:"subsidised ticket",Region:"International",Eligibility:"Berlin residence",URL:"https://www.german-music-export.de",Notes:"Delegate ticket subsidy",Source:"German Music Export","Date Added":"2026-05-08","Date Updated":"2026-05-08",Applied:"FALSE",Result:"",Priority:"Normal"},
+  {ID:"OPP011",Title:"Reeperbahn Festival 2026",Organization:"Reeperbahn Festival",Type:"festival",Status:"open",Deadline:"rolling",Amount:"performance",Region:"Germany",Eligibility:"Open submission via form",URL:"https://www.reeperbahnfestival.com/artist-submission",Notes:"Open submission form. They contact you if selected. Cover letter, release history, Hamburg performance history, bio + links required. Sept 16–19, 2026.",Source:"Reeperbahn","Date Added":"2026-05-08","Date Updated":"2026-05-11",Applied:"FALSE",Result:"",Priority:"High"},
+  {ID:"OPP012",Title:"Waves Vienna 2026",Organization:"Waves Vienna",Type:"festival",Status:"open",Deadline:"2026-05-29",Amount:"performance",Region:"Austria",Eligibility:"Open",URL:"https://wavesvienna.com",Notes:"Deadline May 29",Source:"Waves Vienna","Date Added":"2026-05-08","Date Updated":"2026-05-08",Applied:"FALSE",Result:"",Priority:"Normal"},
+  {ID:"OPP013",Title:"MIL Lisboa 2026",Organization:"MIL",Type:"festival",Status:"open",Deadline:"2026-06-10",Amount:"performance",Region:"Portugal",Eligibility:"Open",URL:"https://mil-lisboa.pt",Notes:"Deadline June 10",Source:"MIL","Date Added":"2026-05-08","Date Updated":"2026-05-08",Applied:"FALSE",Result:"",Priority:"High"},
+  {ID:"OPP014",Title:"Eurosonic Noorderslag 2027",Organization:"ESNS",Type:"festival",Status:"watching",Deadline:"2026-09-01",Amount:"performance",Region:"Netherlands",Eligibility:"Open",URL:"https://www.eurosonic-noorderslag.nl",Notes:"Sept 2026 deadline for 2027 edition",Source:"ESNS","Date Added":"2026-05-08","Date Updated":"2026-05-08",Applied:"FALSE",Result:"",Priority:"High"},
+  {ID:"OPP017",Title:"Tune In Studio Open Call",Organization:"Berlin Senate / Tune In",Type:"open-call",Status:"open",Deadline:"2026-05-31",Amount:"free studio time",Region:"Germany / Berlin",Eligibility:"Berlin artist",URL:"https://www.tunein-berlin.de",Notes:"Free studio time. Deadline May 31.",Source:"Berlin Senate","Date Added":"2026-05-08","Date Updated":"2026-05-08",Applied:"FALSE",Result:"",Priority:"Normal"},
+  {ID:"OPP018",Title:"Musikfonds Kleine Projektförderung",Organization:"Musikfonds",Type:"funding",Status:"watching",Deadline:"2026-05-29",Amount:"up to €3,000",Region:"Germany",Eligibility:"Professional artist",URL:"https://www.musikfonds.de",Notes:"Deadline May 29",Source:"Musikfonds","Date Added":"2026-05-08","Date Updated":"2026-05-08",Applied:"FALSE",Result:"",Priority:"Normal"}
+];
+
+// Radio stations — seed (fallback if Radio sheet tab not set up yet)
+// Method: email | portal | form | show-proposal | paid-portal | paid-groover | email+portal
+const RADIO_SEED = [
+  {ID:"RAD001",Station:"Fritz (rbb) — Fritz Unsigned",Country:"Germany",Format:"Indie / Pop",URL:"https://bands.fritz.de",Contact:"unsigned@fritz.de",SubmitUrl:"https://bands.fritz.de",Method:"email+portal",Priority:"High",LastSubmitted:"",LastResult:"",Notes:"Newcomer/unsigned Berlin artists. Upload via bands.fritz.de OR email unsigned@fritz.de. Note: Lokalmatadoren is a radioeins programme — Fritz's equivalent is Fritz Unsigned."},
+  {ID:"RAD002",Station:"radioeins — Lokalmatadoren",Country:"Germany",Format:"Indie / Pop",URL:"https://www.radioeins.de",Contact:"office@radioeins.de",SubmitUrl:"",Method:"email",Priority:"High",LastSubmitted:"",LastResult:"",Notes:"Berlin/Brandenburg artists. Airs Thursdays 13:10. No public submission form — email office@radioeins.de, addressed to Musikredaktion/Lokalmatadoren."},
+  {ID:"RAD003",Station:"ByteFM — Anstoß",Country:"Germany",Format:"Indie / Alternative",URL:"https://www.byte.fm/sendungen/anstoss/",Contact:"anstoss@byte.fm",SubmitUrl:"",Method:"email",Priority:"High",LastSubmitted:"",LastResult:"",Notes:"Newcomer show, every 2 weeks. Email streaming + download link to anstoss@byte.fm. DE/AT/CH artists only, max debut album. General station: radio@byte.fm."},
+  {ID:"RAD004",Station:"FluxFM — Radar",Country:"Germany",Format:"Indie / Electronic",URL:"https://www.fluxfm.de/g/radar",Contact:"radar@fluxfm.de",SubmitUrl:"",Method:"email",Priority:"High",LastSubmitted:"",LastResult:"",Notes:"Fortnightly Berlin emerging artists show (Thursdays). Email radar@fluxfm.de with short description. Berlin focus."},
+  {ID:"RAD005",Station:"WDR Cosmo",Country:"Germany",Format:"Eclectic / International",URL:"https://www.wdr.de/radio/cosmo/",Contact:"cosmomusic@wdr.de",SubmitUrl:"",Method:"email",Priority:"Normal",LastSubmitted:"",LastResult:"",Notes:"Email cosmomusic@wdr.de. National public radio, open to international-sounding acts."},
+  {ID:"RAD006",Station:"BBC Introducing",Country:"UK",Format:"All genres",URL:"https://www.bbc.co.uk/music/introducing",Contact:"",SubmitUrl:"https://www.bbc.co.uk/music/introducing",Method:"portal",Priority:"High",LastSubmitted:"",LastResult:"",Notes:"PORTAL ONLY — email is ignored. Upload at bbc.co.uk/music/introducing (max 2 tracks/month). Gateway to Radio 1, 6Music, festival stages."},
+  {ID:"RAD007",Station:"BBC 6Music",Country:"UK",Format:"Indie / Alternative",URL:"https://www.bbc.co.uk/6music",Contact:"",SubmitUrl:"https://www.bbc.co.uk/music/introducing",Method:"portal",Priority:"High",LastSubmitted:"",LastResult:"",Notes:"No direct submissions. Route in via BBC Introducing — strong tracks escalated to 6Music producers."},
+  {ID:"RAD008",Station:"Amazing Radio",Country:"UK",Format:"Unsigned / Emerging",URL:"https://www.amazingradio.com",Contact:"music@amazingradio.com",SubmitUrl:"https://amazingradio.com/connect/signup",Method:"paid-portal",Priority:"Normal",LastSubmitted:"",LastResult:"",Notes:"PAID portal (~£3/month). Upload up to 8 tracks, goes live same day. Paid — your call."},
+  {ID:"RAD009",Station:"NPO 3FM",Country:"Netherlands",Format:"Pop / Indie",URL:"https://www.npo3fm.nl",Contact:"muziek@3FM.nl",SubmitUrl:"",Method:"email",Priority:"Normal",LastSubmitted:"",LastResult:"",Notes:"Email muziek@3FM.nl. For 3FM Talent programme: talent@3fm.nl. Major Dutch public radio."},
+  {ID:"RAD010",Station:"Studio Brussel",Country:"Belgium",Format:"Indie / Alternative",URL:"https://www.stubru.be",Contact:"lisa.dupond@vrt.be",SubmitUrl:"",Method:"email",Priority:"High",LastSubmitted:"",LastResult:"",Notes:"No public submission form. Press contact: lisa.dupond@vrt.be (VRT). Cold pitch — Belgian PR is the standard route. Worth trying directly."},
+  {ID:"RAD011",Station:"FIP Radio",Country:"France",Format:"Eclectic",URL:"https://www.radiofrance.fr/fip",Contact:"",SubmitUrl:"https://groover.co/en/influencer/profile/fip/",Method:"paid-groover",Priority:"High",LastSubmitted:"",LastResult:"",Notes:"Official indie route is Groover (paid, credits-based). Direct email only accepted from majors/agencies — no free submission path."},
+  {ID:"RAD012",Station:"Radio Nova",Country:"France",Format:"Indie / Alternative",URL:"https://www.nova.fr",Contact:"contact@novaplanet.com",SubmitUrl:"",Method:"email",Priority:"High",LastSubmitted:"",LastResult:"",Notes:"Email contact@novaplanet.com. Eclectic — jazz, electronic, hip-hop, indie. Also reachable via Groover curators."},
+  {ID:"RAD013",Station:"KEXP",Country:"USA",Format:"Indie",URL:"https://www.kexp.org",Contact:"md@kexp.org",SubmitUrl:"https://www.kexp.org/about/submission-guidelines/",Method:"email",Priority:"High",LastSubmitted:"",LastResult:"",Notes:"Email md@kexp.org with streaming link + WAV download link (no attachments). Include bio, focus tracks, release date. High volume — no receipt confirmation. A session here is a career moment."},
+  {ID:"RAD014",Station:"KCRW",Country:"USA",Format:"Indie / Electronic",URL:"https://www.kcrw.com",Contact:"",SubmitUrl:"https://malcolm.kcrw.com",Method:"portal",Priority:"High",LastSubmitted:"",LastResult:"",Notes:"PORTAL — MALCOLM system at malcolm.kcrw.com. Submit up to 3 tracks, target specific DJs. Email attachments not accepted."},
+  {ID:"RAD015",Station:"The Current (MPR)",Country:"USA",Format:"Indie / Folk",URL:"https://www.thecurrent.org",Contact:"",SubmitUrl:"https://www.thecurrent.org/local/question",Method:"form",Priority:"High",LastSubmitted:"",LastResult:"",Notes:"Submit via form at thecurrent.org/local/question. Include bio, social links, WAV download link. Minnesota Public Radio, massive reach."},
+  {ID:"RAD016",Station:"WFUV",Country:"USA",Format:"AAA / Indie",URL:"https://wfuv.org",Contact:"nyslice@wfuv.org",SubmitUrl:"https://wfuv.org/nyslice",Method:"email",Priority:"Normal",LastSubmitted:"",LastResult:"",Notes:"NY Slice show: email MP3/WAV + bio + streaming links to nyslice@wfuv.org. NY artists preferred but open."},
+  {ID:"RAD017",Station:"KUTX",Country:"USA",Format:"Indie",URL:"https://kutx.org",Contact:"music@kutx.org",SubmitUrl:"https://kutx.org/submit-your-music/",Method:"email",Priority:"Normal",LastSubmitted:"",LastResult:"",Notes:"Email music@kutx.org — streaming link + WAV via Dropbox/Drive, subject 'Music Submission – lovelee'. Austin/Texas focus but open internationally."},
+  {ID:"RAD018",Station:"NTS Radio",Country:"UK / International",Format:"Eclectic",URL:"https://www.nts.live",Contact:"press@ntslive.co.uk",SubmitUrl:"https://www.nts.live/contact",Method:"show-proposal",Priority:"High",LastSubmitted:"",LastResult:"",Notes:"No track submission inbox. Pitch a SHOW CONCEPT via nts.live/contact with 3 audio demo links. Global, influential, plays emerging European artists."},
+  {ID:"RAD019",Station:"Fritz Unsigned",Country:"Germany",Format:"Indie / Pop",URL:"https://bands.fritz.de",Contact:"unsigned@fritz.de",SubmitUrl:"https://bands.fritz.de",Method:"portal",Priority:"High",LastSubmitted:"",LastResult:"",Notes:"Fritz Unsigned — unsigned/independent Berlin artists. Upload via bands.fritz.de. Sunday 8–10pm slot."},
+];
+
+// ── Manual sources (portals / aggregators to check periodically) ─
+// type: 'pdf' = export as PDF weekly, drag into app
+//       'check' = visit and paste URLs manually
+const MANUAL_SOURCES = [
+  { id:'ms01', name:'Music Pool Berlin — Padlet', url:'https://padlet.com/Eileen_MPB/infoboard-music-pool-berlin-qmv8zjbkhhi0ag7x', type:'pdf',   interval:7,  note:'Share → Export → PDF → drag into "📄 Add from PDF"' },
+  { id:'ms03', name:'Clubcommission Berlin',       url:'https://www.clubcommission.de/foerderung/',                                  type:'check', interval:30, note:'Berlin club/venue funding. Visit monthly.' },
+  { id:'ms04', name:'Landesmusikrat Berlin',       url:'https://www.landesmusikrat-berlin.de/',                                      type:'check', interval:30, note:'Berlin music council — grants + open calls.' },
+  { id:'ms05', name:'Any aggregator app / board',  url:'',                                                                           type:'check', interval:7,  note:'Spot something in an app? Paste the URL into "🤖 Add via Claude".' },
+];
+
+// ── Newsletter data ───────────────────────────────────────────
+const NEWSLETTERS = [
+  // German funding
+  { id:'nl01', name:'Initiative Musik',          url:'https://www.initiative-musik.de/newsletter/',                                    note:'Also covers German Music Export' },
+  { id:'nl02', name:'Musicboard Berlin',          url:'https://www.musicboard-berlin.de/newsletter/',                                  note:'' },
+  { id:'nl03', name:'GEMA Kulturförderung',       url:'https://www.gema.de/de/aktuelles/newsletter',                                   note:'Monthly' },
+  { id:'nl04', name:'Musikfonds',                 url:'https://www.musikfonds.de/',                                                    note:'Signup in homepage footer' },
+  { id:'nl05', name:'Fonds Darstellende Künste',  url:'https://www.fonds-daku.de/en/service/newsletter/',                              note:'Monthly' },
+  { id:'nl06', name:'Berlin Music Commission',    url:'https://berlin-music-commission.de/',                                           note:'Signup in homepage footer' },
+  { id:'nl23', name:'Listen to Berlin',           url:'https://www.listentoberlin.de/',                                               note:'Berlin music discovery — homepage footer signup' },
+  // EU / international funding
+  { id:'nl07', name:'Creative Europe (EACEA)',    url:'https://ec.europa.eu/newsroom/eacea_corporate/user-subscriptions/9351',         note:'EU funding calls — use this link directly' },
+  { id:'nl09', name:'PRS Foundation',             url:'https://prsfoundation.com/newsletter-sign-up/',                                 note:'If verification email was broken, try signing up again' },
+  { id:'nl10', name:'CNM France',                 url:'https://cnm.fr/inscription-a-la-newsletter/',                                   note:'' },
+  // Festivals
+  { id:'nl11', name:'Eurosonic (ESNS)',            url:'https://esns.nl/en/info/newsletter/',                                          note:'Pick: ESNS Pro (industry/conference) + ESNS Radar (artist showcases)' },
+  { id:'nl12', name:'The Great Escape',            url:'https://greatescapefestival.com/signup/',                                      note:'' },
+  { id:'nl13', name:'Waves Vienna',                url:'https://www.wavesvienna.com/newsletter',                                       note:'' },
+  { id:'nl14', name:'MAMA Paris',                  url:'https://mama-musicandconvention.com/en/',                                      note:'Signup in homepage' },
+  { id:'nl15', name:'Trans Musicales',             url:'https://www.lestrans.com/inscription-newsletter/',                             note:'' },
+  { id:'nl16', name:'by:Larm Oslo',               url:'https://nyhetsbrev.bylarm.no/p/s/MjY1NDk6YjBlYTJmOWMtOTNlMC00MjE2LTk4MGMtMWYzMTcwOTUxYjlm', note:'Substack' },
+  { id:'nl17', name:'Iceland Airwaves',            url:'https://icelandairwaves.is/newsletter/',                                       note:'' },
+  { id:'nl18', name:'SXSW',                        url:'https://sxsw.com/newsletters/',                                               note:'Pick: SXSW Music Community Newsletter + SXSW Event Updates' },
+  { id:'nl19', name:'MENT Ljubljana',              url:'https://ment.si/en/newsletter/',                                              note:'' },
+  { id:'nl21', name:'Glastonbury Emerging Talent', url:'https://www.glastonburyfestivals.co.uk/contact/newsletter-sign-up/',           note:'General festival newsletter' },
+  { id:'nl22', name:'Music Pool Berlin',           url:'https://cd0b8740.sibforms.com/serve/MUIFAIdpN-W8hI7PU_4NictWX55QFIKkAkTSlMktfrEvLrs9YKNBbNyByMyhBE16wC2qzf0DxVJ9oa0H__CO-5h1Gv5RRMu2yO6X5GTwZWmZLdvbfS1NMHBa1LHgdrIhcep9E_2BGpMNjEcN8gQMoq_51ktNQjdPwLiNiMzIKoSlGF29AzrvMMKXtunUi-PcBkxM_PjcAvU1RNB4', note:'Links to Padlet + open calls' },
+];
+
+// ── State ─────────────────────────────────────────────────────
+let allOpps = [];
+let allRadio = RADIO_SEED;
+let filtered = [];
+let sortCol = 'Deadline';
+let sortDir = 1;
+let radioHighOnly = false;
+
+// ── Init ──────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  if (!SCRIPT_URL) {
+    document.getElementById('setup-banner').classList.add('show');
+    loadData(SEED);
+  } else {
+    fetchFromScript();
+  }
+  fetchRadio();
+
+  document.getElementById('refresh-btn').addEventListener('click', () => {
+    if (SCRIPT_URL) fetchFromScript(); else loadData(SEED);
+  });
+  document.getElementById('scan-btn').addEventListener('click', runScan);
+  document.getElementById('claude-btn').addEventListener('click', toggleClaudePanel);
+  document.getElementById('claude-send-btn').addEventListener('click', openWithClaude);
+  document.getElementById('morning-btn').addEventListener('click', runMorningBriefing);
+  document.getElementById('pdf-btn').addEventListener('click', () => { setPdfTab('text'); document.getElementById('pdf-overlay').classList.add('show'); });
+  document.getElementById('pdf-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.classList.remove('show'); });
+  document.getElementById('add-btn').addEventListener('click', openAddModal);
+  document.getElementById('add-close').addEventListener('click', closeAddModal);
+  document.getElementById('add-cancel').addEventListener('click', closeAddModal);
+  document.getElementById('detail-close').addEventListener('click', closeDetail);
+  document.getElementById('browse-toggle').addEventListener('click', toggleBrowse);
+  document.getElementById('add-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeAddModal(); });
+  document.getElementById('detail-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeDetail(); });
+  document.getElementById('prompt-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.classList.remove('show'); });
+  document.getElementById('add-form').addEventListener('submit', handleSubmit);
+  document.getElementById('search').addEventListener('input', applyFilters);
+  document.getElementById('filter-type').addEventListener('change', applyFilters);
+  document.getElementById('filter-status').addEventListener('change', applyFilters);
+  document.getElementById('filter-region').addEventListener('change', applyFilters);
+  document.querySelectorAll('th[data-col]').forEach(th =>
+    th.addEventListener('click', () => handleSort(th.dataset.col))
+  );
+});
+
+// ── Fetch ─────────────────────────────────────────────────────
+async function fetchFromScript() {
+  document.getElementById('main-loading').style.display = 'flex';
+  document.getElementById('dashboard').style.display = 'none';
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    const res = await fetch(SCRIPT_URL, { redirect: 'follow', signal: controller.signal });
+    clearTimeout(timeout);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    loadData(data.opportunities || []);
+  } catch (e) {
+    console.error(e);
+    document.getElementById('setup-banner').classList.add('show');
+    loadData(SEED);
+  }
+}
+
+async function fetchRadio() {
+  if (!SCRIPT_URL) { renderRadio(RADIO_SEED); return; }
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    const res = await fetch(SCRIPT_URL + '?action=listRadio', { redirect: 'follow', signal: controller.signal });
+    clearTimeout(timeout);
+    const data = await res.json();
+    if (data.stations && data.stations.length > 0) {
+      allRadio = data.stations;
+    }
+  } catch (e) { /* fallback to seed */ }
+  renderRadio(allRadio);
+}
+
+function loadData(opps) {
+  allOpps = opps;
+  document.getElementById('main-loading').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  renderStats();
+  renderActionCards();
+  renderHighlightCards();
+  renderWatchingSection();
+  applyFilters();
+  updateNewsletterSubtitle();
+  setLastUpdated();
+}
+
+function setLastUpdated() {
+  document.getElementById('last-updated').textContent =
+    'Updated ' + new Date().toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
+}
+
+// ── Stats ─────────────────────────────────────────────────────
+function renderStats() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const in30  = new Date(today); in30.setDate(today.getDate() + 30);
+  document.getElementById('stat-total').textContent     = allOpps.length;
+  document.getElementById('stat-open').textContent      = allOpps.filter(o => o.Status === 'open').length;
+  document.getElementById('stat-submitted').textContent = allOpps.filter(o => o.Applied === 'TRUE').length;
+  document.getElementById('stat-high').textContent      = allOpps.filter(o => o.Priority === 'High').length;
+  document.getElementById('stat-urgent').textContent    = allOpps.filter(o => {
+    const d = pd(o.Deadline);
+    return d && d >= today && d <= in30 && !['closed','ineligible','submitted'].includes(o.Status);
+  }).length;
+  document.getElementById('stat-funding').textContent   = allOpps.filter(o => o.Type === 'funding').length;
+  document.getElementById('stat-festival').textContent  = allOpps.filter(o => o.Type === 'festival').length;
+  document.getElementById('footer-count').textContent   = allOpps.length + ' opportunities tracked';
+}
+
+// ── Action cards ──────────────────────────────────────────────
+function renderActionCards() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const in30  = new Date(today); in30.setDate(today.getDate() + 30);
+
+  const urgent = allOpps
+    .filter(o => {
+      const d = pd(o.Deadline);
+      return d && d <= in30 && !['closed','ineligible','submitted','watching'].includes(o.Status);
+    })
+    .sort((a, b) => pd(a.Deadline) - pd(b.Deadline));
+
+  const el = document.getElementById('action-cards');
+  const empty = document.getElementById('action-empty');
+  const sub = document.getElementById('action-sub');
+
+  if (!urgent.length) {
+    el.innerHTML = '';
+    empty.style.display = 'block';
+    sub.textContent = '';
+    return;
+  }
+  empty.style.display = 'none';
+  sub.textContent = urgent.length + ' deadline' + (urgent.length > 1 ? 's' : '') + ' in the next 30 days';
+  el.innerHTML = urgent.map(o => oppCard(o, today, true)).join('');
+  bindCardListeners(el);
+}
+
+// ── Highlight cards ───────────────────────────────────────────
+function renderHighlightCards() {
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  const high = allOpps
+    .filter(o =>
+      o.Priority === 'High' &&
+      o.Status === 'open' &&       // only truly open — not watching, not closed
+      o.Applied !== 'TRUE' &&
+      o.URL                        // must have somewhere to actually go
+    )
+    .sort((a, b) => {
+      // Deadline approaching first; no deadline goes to bottom
+      const da = pd(a.Deadline), db = pd(b.Deadline);
+      if (da && db) return da - db;
+      if (da) return -1; if (db) return 1;
+      return 0;
+    })
+    .slice(0, 5); // top 5 only
+
+  const el = document.getElementById('highlight-cards');
+  const sub = document.getElementById('highlights-sub');
+
+  if (!high.length) {
+    document.getElementById('highlights-section').style.display = 'none';
+    return;
+  }
+  document.getElementById('highlights-section').style.display = 'block';
+  sub.textContent = 'top ' + high.length + ' actionable right now';
+  el.innerHTML = high.map(o => oppCard(o, today, false)).join('');
+  bindCardListeners(el);
+}
+
+// ── Watching section ──────────────────────────────────────────
+function renderWatchingSection() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const in60  = new Date(today); in60.setDate(today.getDate() + 60);
+
+  const watching = allOpps
+    .filter(o => o.Status === 'watching')
+    .sort((a, b) => {
+      // High priority first, then by deadline
+      const ap = a.Priority === 'High' ? 0 : 1;
+      const bp = b.Priority === 'High' ? 0 : 1;
+      if (ap !== bp) return ap - bp;
+      const da = pd(a.Deadline), db = pd(b.Deadline);
+      if (da && db) return da - db;
+      if (da) return -1; if (db) return 1;
+      return 0;
+    });
+
+  const highCount = watching.filter(o => o.Priority === 'High').length;
+  const soonCount = watching.filter(o => { const d = pd(o.Deadline); return d && d <= in60; }).length;
+
+  const sub = document.getElementById('watching-sub');
+  const list = document.getElementById('watching-list');
+
+  if (!watching.length) {
+    document.getElementById('watching-section').style.display = 'none';
+    return;
+  }
+  document.getElementById('watching-section').style.display = 'block';
+
+  let subParts = [watching.length + ' tracked'];
+  if (highCount) subParts.push(highCount + ' high priority');
+  if (soonCount) subParts.push(soonCount + ' with deadline soon');
+  sub.textContent = subParts.join(' · ');
+
+  const rows = watching.map(o => {
+    const d = pd(o.Deadline);
+    let dlText = '—', dlClass = '';
+    if (o.Deadline && o.Deadline !== 'rolling' && o.Deadline !== 'watching') {
+      if (d) {
+        const diff = Math.ceil((d - today) / 86400000);
+        dlText  = fd(o.Deadline);
+        dlClass = diff <= 60 ? 'soon' : '';
+      } else {
+        dlText = o.Deadline;
+      }
+    } else if (o.Deadline === 'rolling') {
+      dlText = 'rolling';
+    }
+
+    const star = o.Priority === 'High' ? '<span style="color:var(--gold);margin-right:4px">⭐</span>' : '';
+    const visitBtn = o.URL
+      ? `<a href="${esc(o.URL)}" target="_blank" rel="noopener" class="btn btn-ghost btn-xs" style="flex-shrink:0">↗</a>`
+      : '';
+
+    return `<div class="watching-row">
+      <div class="watching-title">${star}${esc(o.Title)}</div>
+      <div class="watching-org">${esc(o.Organization)}</div>
+      <div class="watching-dl ${dlClass}">${dlText}</div>
+      ${visitBtn}
+    </div>`;
+  }).join('');
+
+  list.innerHTML = `<div class="watching-summary">
+    <span>These open up on their own schedule — the weekly scan checks them automatically.</span>
+    <a href="https://docs.google.com/spreadsheets/d/1Si1_GF1DVPq7ZNfH5NPOxQaH6gJDtiDDbqTUYT7kQg4/edit" target="_blank" style="color:var(--accent);font-size:.72rem">Open Sheet ↗</a>
+  </div>${rows}`;
+}
+
+function toggleWatching() {
+  const list = document.getElementById('watching-list');
+  const btn  = document.getElementById('watching-toggle');
+  const collapsed = list.classList.toggle('collapsed');
+  btn.textContent = collapsed ? 'Show ↓' : 'Hide ↑';
+}
+
+function oppCard(o, today, showUrgency) {
+  const d = pd(o.Deadline);
+  let urgencyClass = 'high';
+  let dLabel = '';
+  if (d) {
+    const diff = Math.ceil((d - today) / 86400000);
+    if (diff < 0) { dLabel = `<span class="ci-val urgent">${Math.abs(diff)}d overdue</span>`; urgencyClass = 'urgent'; }
+    else if (diff === 0) { dLabel = `<span class="ci-val urgent">TODAY</span>`; urgencyClass = 'urgent'; }
+    else if (diff <= 7)  { dLabel = `<span class="ci-val urgent">${diff} days</span>`; urgencyClass = 'urgent'; }
+    else if (diff <= 30) { dLabel = `<span class="ci-val soon">${diff} days</span>`; urgencyClass = 'soon'; }
+    else { dLabel = `<span class="ci-val">${fd(o.Deadline)}</span>`; }
+  } else {
+    dLabel = `<span class="ci-val">${esc(o.Deadline) || '—'}</span>`;
+  }
+
+  const alreadyApplied = o.Applied === 'TRUE';
+  const visitBtn = o.URL
+    ? `<a href="${esc(o.URL)}" target="_blank" rel="noopener" class="btn btn-ghost btn-xs">↗ Visit</a>`
+    : '';
+  const appliedBtn = alreadyApplied
+    ? `<button class="btn btn-green btn-xs done" disabled>✓ Applied</button>`
+    : `<button class="btn btn-green btn-xs" onclick="markApplied('${esc(o.ID)}',this)">✓ Mark Applied</button>`;
+
+  return `<div class="opp-card ${showUrgency ? urgencyClass : 'high'}" data-id="${esc(o.ID)}">
+    <div class="card-top">
+      <span class="type-badge type-${esc(o.Type)}">${esc(o.Type)}</span>
+      ${o.Priority === 'High' ? '<span class="prio-badge">⭐ High</span>' : ''}
+    </div>
+    <div>
+      <div class="card-title">${esc(o.Title)}</div>
+      <div class="card-org">${esc(o.Organization)}${o.Region ? ' · ' + esc(o.Region) : ''}</div>
+    </div>
+    <div class="card-info">
+      ${d || o.Deadline ? `<div class="ci"><span>📅</span>${dLabel}</div>` : ''}
+      ${o.Amount ? `<div class="ci"><span>💰</span><span class="ci-val">${esc(o.Amount)}</span></div>` : ''}
+      <div class="ci"><span class="badge badge-${esc(o.Status)}">${esc(o.Status)}</span></div>
+    </div>
+    <div class="card-actions">${visitBtn}${appliedBtn}</div>
+  </div>`;
+}
+
+function bindCardListeners(container) {
+  container.querySelectorAll('.opp-card').forEach(card => {
+    card.addEventListener('click', e => {
+      if (e.target.closest('a,button')) return;
+      const o = allOpps.find(x => x.ID === card.dataset.id);
+      if (o) openDetail(o);
+    });
+  });
+}
+
+// ── Radio ─────────────────────────────────────────────────────
+function renderRadio(stations) {
+  document.getElementById('radio-loading').style.display = 'none';
+  const list = document.getElementById('radio-list');
+
+  const toShow = radioHighOnly ? stations.filter(s => s.Priority === 'High') : stations;
+
+  const byCountry = {};
+  toShow.forEach(s => {
+    const c = s.Country || 'Other';
+    if (!byCountry[c]) byCountry[c] = [];
+    byCountry[c].push(s);
+  });
+
+  const countryOrder = ['Germany','UK','USA','Belgium','Netherlands','France','UK / International'];
+  const sorted = [...new Set([...countryOrder, ...Object.keys(byCountry)])].filter(c => byCountry[c]);
+
+  // Remember which groups were open before re-render
+  const prevOpen = {};
+  list.querySelectorAll('.radio-country-rows').forEach(el => {
+    if (!el.classList.contains('collapsed')) prevOpen[el.id] = true;
+  });
+
+  list.innerHTML = sorted.map((country, i) => {
+    const groupId = 'rcg-' + country.replace(/[^a-z0-9]/gi, '-');
+    // Germany open by default (or any previously-opened group); everything else collapsed
+    const isOpen = prevOpen[groupId] !== undefined ? prevOpen[groupId] : (country === 'Germany');
+    const headerClass = isOpen ? 'radio-country-header' : 'radio-country-header collapsed-group';
+    const rowsClass   = isOpen ? 'radio-country-rows' : 'radio-country-rows collapsed';
+
+    const rows = byCountry[country].map(s => {
+      const submitted = s.LastSubmitted || s['Last Submitted'];
+      const result    = s.LastResult    || s['Last Result'];
+      let resultHtml = '<span class="no-resp">Not yet submitted</span>';
+      if (result === 'played')          resultHtml = '<span class="played">✓ Played</span>';
+      else if (result === 'live session') resultHtml = '<span class="played">✓ Live session</span>';
+      else if (result === 'declined')   resultHtml = '<span class="declined">✗ Declined</span>';
+      else if (submitted)               resultHtml = '<span class="no-resp">Submitted — awaiting response</span>';
+
+      const hasSubmitted  = !!submitted;
+      const alreadyPlayed = result === 'played' || result === 'live session';
+      const method = s.Method || 'email';
+      const portalUrl = s.SubmitUrl || s.URL;
+
+      let submitBtn;
+      if (method === 'portal' || method === 'form') {
+        submitBtn = `<a href="${esc(portalUrl)}" target="_blank" rel="noopener" class="btn btn-primary btn-xs">Open portal ↗</a>`;
+      } else if (method === 'paid-portal' || method === 'paid-groover') {
+        submitBtn = `<a href="${esc(portalUrl)}" target="_blank" rel="noopener" class="btn btn-ghost btn-xs" title="Paid platform">💳 Paid ↗</a>`;
+      } else if (method === 'show-proposal') {
+        submitBtn = `<button class="btn btn-primary btn-xs" onclick="submitRadioStation('${esc(s.ID)}',this)">Pitch show →</button>`;
+      } else {
+        // email or email+portal
+        const submitLabel = hasSubmitted ? 'Resubmit →' : 'Submit track →';
+        submitBtn = `<button class="btn ${alreadyPlayed ? 'btn-ghost' : 'btn-primary'} btn-xs" onclick="submitRadioStation('${esc(s.ID)}',this)">${submitLabel}</button>`;
+      }
+
+      // Portal button for email+portal stations (secondary)
+      const portalBtn = method === 'email+portal'
+        ? `<a href="${esc(portalUrl)}" target="_blank" rel="noopener" class="btn btn-ghost btn-xs">Portal ↗</a>`
+        : '';
+
+      const markBtns = hasSubmitted && !alreadyPlayed && result !== 'declined' && method.includes('email')
+        ? `<button class="btn btn-ghost btn-xs" style="color:var(--green)" onclick="markRadioResult('${esc(s.ID)}','played',this)">✓ Played</button><button class="btn btn-ghost btn-xs" style="color:var(--red)" onclick="markRadioResult('${esc(s.ID)}','declined',this)">✗ Decline</button>`
+        : '';
+
+      return `<div class="radio-row">
+        <div class="radio-icon">📻</div>
+        <div class="radio-main">
+          <div class="radio-name">${esc(s.Station)}${s.Priority === 'High' ? ' <span style="color:var(--gold);font-size:.65rem">⭐</span>' : ''}</div>
+          <div class="radio-meta">${esc(s.Format || '')}${s.URL ? ` · <a href="${esc(s.URL)}" target="_blank" rel="noopener">${esc(s.URL.replace('https://','').replace('http://','').replace(/\/.*/,''))}</a>` : ''}</div>
+        </div>
+        <div class="radio-status">${resultHtml}${submitted ? `<div style="font-size:.68rem;margin-top:2px">Last: ${esc(submitted)}</div>` : ''}</div>
+        <div class="radio-actions">${submitBtn}${portalBtn}${markBtns}</div>
+      </div>`;
+    }).join('');
+
+    const count = byCountry[country].length;
+    return `
+      <div class="${headerClass}" onclick="toggleRadioCountry('${groupId}')">
+        <span>${country} <span style="font-weight:400;opacity:.6">(${count})</span></span>
+        <span class="chevron">▾</span>
+      </div>
+      <div class="${rowsClass}" id="${groupId}">${rows}</div>`;
+  }).join('');
+}
+
+function toggleRadioCountry(groupId) {
+  const rows   = document.getElementById(groupId);
+  const header = rows.previousElementSibling;
+  const open   = rows.classList.toggle('collapsed');
+  header.classList.toggle('collapsed-group', open);
+}
+
+function toggleRadioSection() {
+  const list = document.getElementById('radio-list');
+  const btn  = document.getElementById('radio-toggle-btn');
+  const collapsed = list.classList.toggle('collapsed');
+  btn.textContent = collapsed ? 'Show ↓' : 'Hide ↑';
+}
+
+function toggleRadioHighOnly() {
+  radioHighOnly = !radioHighOnly;
+  const btn = document.getElementById('radio-high-btn');
+  btn.classList.toggle('active', radioHighOnly);
+  btn.textContent = radioHighOnly ? '✕ All stations' : '⭐ High only';
+  renderRadio(allRadio);
+}
+
+function toggleHighlights() {
+  const cards = document.getElementById('highlight-cards');
+  const btn   = document.getElementById('highlights-toggle');
+  const collapsed = cards.classList.toggle('collapsed');
+  btn.textContent = collapsed ? 'Show ↓' : 'Hide ↑';
+}
+
+function submitRadioStation(id, btn) {
+  const s = allRadio.find(x => x.ID === id);
+  if (!s) return;
+  const today = new Date().toISOString().split('T')[0];
+  const method = s.Method || 'email';
+  const submitUrl = s.SubmitUrl || s['Submit URL'] || s.Contact || '';
+  const isGerman = s.Country === 'Germany' || (s.Country || '').includes('Germany');
+
+  let prompt;
+  if (method === 'show-proposal') {
+    prompt = `Draft a show proposal for lovelee to pitch to ${s.Station}.
+
+Station: ${s.Station} (${s.Country})
+Station website: ${s.URL || 'N/A'}
+Submit at: ${submitUrl || s.URL}
+Station notes: ${s.Notes || 'N/A'}
+
+Artist: lovelee (Leon Byvanck) — Berlin-based indie pop, between Steve Lacy and Clairo.
+Genre/sound: dreamy indie pop, electronic touches, introspective lyrics.
+Credentials: Touring guitarist for Dilla (150+ shows — Hurricane, Southside, Superbloom, Chemnitz 2025 opening ceremony). TV: ProSieben, MDR, ARD, ZDF. 2M organic TikTok views, no label.
+Spotify: https://open.spotify.com/artist/0ulcfO2JDsDuhgfKPGuTVo
+Press folder: https://drive.google.com/drive/folders/1IOBNqZQB_vBXt-1O403StX-ih5IzhZXD
+
+Draft a compelling show concept proposal for this station. The show should feel natural for their platform — not just "play my music". Think: a curated indie-pop mix with commentary, or a Berlin emerging artists feature, or a genre-specific journey. Under 200 words. Include 3 demo track links (use the Spotify above as placeholder). Sign off: Leon Byvanck / lovelee / itsloveleeee@gmail.com`;
+  } else {
+    prompt = `Draft a pitch email for lovelee to submit music to ${s.Station} (${s.Country}).
+
+Station notes: ${s.Notes || 'N/A'}
+Station website: ${s.URL || 'N/A'}
+${submitUrl ? 'Email / submission: ' + submitUrl : ''}
+
+Artist: lovelee (Leon Byvanck) — Berlin-based indie pop, between Steve Lacy and Clairo.
+Credentials: Touring guitarist for Dilla (150+ shows — Hurricane, Southside, Superbloom, Chemnitz European Capital of Culture 2025). TV: ProSieben, MDR, ARD, ZDF. 2M organic TikTok views, no label. GEMA member, KSK registered.
+Debut EP Storm Chasers: June 2026.
+Spotify: https://open.spotify.com/artist/0ulcfO2JDsDuhgfKPGuTVo
+Press folder (bio, photo, WAV files): https://drive.google.com/drive/folders/1IOBNqZQB_vBXt-1O403StX-ih5IzhZXD
+
+Write the email under 150 words. Warm but not try-hard. Open with one specific sentence about why lovelee fits THIS station. No buzzwords. ${isGerman ? 'Write in German.' : 'Write in English.'}
+Sign off: Leon Byvanck / lovelee / itsloveleeee@gmail.com`;
+  }
+
+  // Always show modal
+  showPromptModal(s.Station, prompt, null, null);
+
+  // Record submission date in backend
+  if (SCRIPT_URL) {
+    fetch(`${SCRIPT_URL}?action=updateRadio&id=${encodeURIComponent(id)}&field=Last+Submitted&value=${today}`)
+      .then(() => {
+        const station = allRadio.find(x => x.ID === id);
+        if (station) { station['Last Submitted'] = today; station.LastSubmitted = today; }
+      }).catch(() => {});
+  }
+}
+
+function showPromptModal(stationName, prompt, btn, orig) {
+  document.getElementById('prompt-modal-title').textContent = `Claude prompt — ${stationName}`;
+  document.getElementById('prompt-modal-text').value = prompt;
+  document.getElementById('prompt-overlay').classList.add('show');
+  // Auto-select so user sees it's ready to copy
+  requestAnimationFrame(() => {
+    const ta = document.getElementById('prompt-modal-text');
+    ta.select(); ta.setSelectionRange(0, 99999);
+  });
+}
+
+function selectPromptText() {
+  const ta = document.getElementById('prompt-modal-text');
+  ta.select();
+  ta.setSelectionRange(0, 99999);
+  try { document.execCommand('copy'); } catch(e) {}
+}
+
+async function markRadioResult(id, result, btn) {
+  if (!SCRIPT_URL) { alert('No SCRIPT_URL configured — cannot save result.'); return; }
+  const orig = btn.textContent;
+  btn.textContent = '…';
+  btn.disabled = true;
+  try {
+    const url = `${SCRIPT_URL}?action=updateRadio&id=${encodeURIComponent(id)}&field=Last+Result&value=${encodeURIComponent(result)}`;
+    await fetch(url);
+    // Update local state
+    const station = allRadio.find(x => x.ID === id);
+    if (station) {
+      station['Last Result'] = result;
+      station.LastResult     = result;
+      station['Last Submitted'] = station['Last Submitted'] || new Date().toISOString().split('T')[0];
+    }
+    renderRadio(allRadio); // re-render to show updated state
+  } catch (err) {
+    btn.textContent = orig;
+    btn.disabled = false;
+    alert('Could not save: ' + err.message);
+  }
+}
+
+// ── Browse toggle ─────────────────────────────────────────────
+function toggleBrowse() {
+  const wrap = document.getElementById('browse-wrap');
+  const btn  = document.getElementById('browse-toggle');
+  const open = wrap.style.display === 'none';
+  wrap.style.display = open ? 'block' : 'none';
+  btn.textContent = open ? 'Hide ↑' : 'Show all ↓';
+}
+
+// ── Filters & sort ────────────────────────────────────────────
+function applyFilters() {
+  const q      = document.getElementById('search').value.trim().toLowerCase();
+  const type   = document.getElementById('filter-type').value;
+  const status = document.getElementById('filter-status').value;
+  const region = document.getElementById('filter-region').value;
+
+  filtered = allOpps.filter(o => {
+    if (type   && o.Type   !== type)   return false;
+    if (status && o.Status !== status) return false;
+    if (region && o.Region !== region) return false;
+    if (q) {
+      const hay = [o.Title, o.Organization, o.Notes, o.Amount, o.Eligibility].join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  sortData(); renderTable();
+  document.getElementById('count-label').textContent =
+    filtered.length !== allOpps.length
+      ? `${filtered.length} / ${allOpps.length} shown`
+      : `${allOpps.length} opportunities`;
+}
+
+function sortData() {
+  filtered.sort((a, b) => {
+    let av = a[sortCol] || '', bv = b[sortCol] || '';
+    if (sortCol === 'Deadline') {
+      const da = pd(av), db = pd(bv);
+      if (da && db) return (da - db) * sortDir;
+      if (da) return -1 * sortDir;
+      if (db) return 1 * sortDir;
+    }
+    return av.localeCompare(bv, 'de') * sortDir;
+  });
+}
+
+function handleSort(col) {
+  if (sortCol === col) sortDir *= -1; else { sortCol = col; sortDir = 1; }
+  document.querySelectorAll('th[data-col]').forEach(th => {
+    th.classList.remove('sort-asc','sort-desc');
+    if (th.dataset.col === col) th.classList.add(sortDir === 1 ? 'sort-asc' : 'sort-desc');
+  });
+  sortData(); renderTable();
+}
+
+// ── Table ─────────────────────────────────────────────────────
+function renderTable() {
+  const tbody = document.getElementById('opp-tbody');
+  const empty = document.getElementById('empty-state');
+
+  if (!filtered.length) { empty.style.display = 'block'; tbody.innerHTML = ''; return; }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = filtered.map(o => `
+    <tr class="${o.Priority === 'High' ? 'high-row' : ''}" data-id="${esc(o.ID)}">
+      <td class="tc-title">
+        ${o.Priority === 'High' ? '⭐ ' : ''}${esc(o.Title)}
+        <span class="org-sub">${esc(o.Organization)}${o.Region ? ' · ' + esc(o.Region) : ''}</span>
+      </td>
+      <td><span class="type-badge type-${esc(o.Type)}">${esc(o.Type)}</span></td>
+      <td><span class="badge badge-${esc(o.Status)}">${esc(o.Status)}</span></td>
+      <td class="tc-deadline ${dlClass(o.Deadline, o.Status)}">${fd(o.Deadline)}</td>
+      <td class="tc-amount" title="${esc(o.Amount)}">${esc(o.Amount)}</td>
+      <td class="tc-notes" title="${esc(o.Notes)}">${esc(o.Notes)}</td>
+    </tr>`).join('');
+
+  tbody.querySelectorAll('tr').forEach((tr, i) =>
+    tr.addEventListener('click', () => openDetail(filtered[i]))
+  );
+}
+
+// ── Detail panel ──────────────────────────────────────────────
+function openDetail(o) {
+  document.getElementById('dp-title').textContent = o.Title;
+  document.getElementById('dp-org').textContent   = o.Organization;
+
+  const isHigh = o.Priority === 'High';
+  const fields = [
+    ['Status',      `<span class="badge badge-${esc(o.Status)}">${esc(o.Status)}</span>`],
+    ['Type',        `<span class="type-badge type-${esc(o.Type)}">${esc(o.Type)}</span>`],
+    ['Priority',    isHigh ? '<span class="prio-badge">⭐ High</span>' : esc(o.Priority || 'Normal')],
+    ['Deadline',    fd(o.Deadline)],
+    ['Amount',      esc(o.Amount)],
+    ['Region',      esc(o.Region)],
+    ['Eligibility', esc(o.Eligibility)],
+    ['Applied',     o.Applied === 'TRUE' ? '<span style="color:var(--green);font-weight:600">✓ Yes</span>' : 'No'],
+    ['Result',      esc(o.Result) || '—'],
+    ['Source',      esc(o.Source)],
+    ['Date Added',  esc(o['Date Added'])],
+    ['Notes',       esc(o.Notes)],
+  ];
+
+  document.getElementById('dp-fields').innerHTML =
+    '<hr class="dp-divider">' +
+    fields.map(([k, v]) =>
+      `<div class="dp-row"><div class="dp-k">${k}</div><div class="dp-v">${v}</div></div>`
+    ).join('') +
+    (o.URL ? `<div class="dp-row"><div class="dp-k">URL</div><div class="dp-v"><a href="${esc(o.URL)}" target="_blank" rel="noopener">${esc(o.URL)}</a></div></div>` : '');
+
+  const alreadyApplied = o.Applied === 'TRUE';
+  document.getElementById('dp-actions').innerHTML =
+    (o.URL ? `<a href="${esc(o.URL)}" target="_blank" rel="noopener" class="btn btn-primary btn-sm">↗ Visit</a>` : '') +
+    (alreadyApplied
+      ? `<button class="btn btn-green btn-sm done" disabled>✓ Applied</button>`
+      : `<button class="btn btn-green btn-sm" onclick="markApplied('${esc(o.ID)}',this)">✓ Mark Applied</button>`) +
+    (isHigh
+      ? `<button class="btn btn-ghost btn-sm" onclick="setPriority('${esc(o.ID)}','Normal',this)">↓ Set Normal</button>`
+      : `<button class="btn btn-ghost btn-sm" onclick="setPriority('${esc(o.ID)}','High',this)">⭐ Set High</button>`);
+
+  document.getElementById('detail-overlay').classList.add('show');
+}
+
+function closeDetail() { document.getElementById('detail-overlay').classList.remove('show'); }
+
+// ── Add modal ─────────────────────────────────────────────────
+function openAddModal() {
+  document.getElementById('add-form').reset();
+  document.getElementById('form-error').classList.remove('show');
+  document.getElementById('form-success').classList.remove('show');
+  document.getElementById('add-submit').textContent = 'Save Opportunity';
+  document.getElementById('add-overlay').classList.add('show');
+}
+function closeAddModal() { document.getElementById('add-overlay').classList.remove('show'); }
+
+async function handleSubmit(e) {
+  e.preventDefault();
+  const errEl = document.getElementById('form-error');
+  const okEl  = document.getElementById('form-success');
+  const btn   = document.getElementById('add-submit');
+  errEl.classList.remove('show'); okEl.classList.remove('show');
+  if (!SCRIPT_URL) { errEl.textContent = 'Set SCRIPT_URL first.'; errEl.classList.add('show'); return; }
+  const payload = {};
+  new FormData(e.target).forEach((v, k) => { payload[k] = v; });
+  btn.textContent = 'Saving…'; btn.disabled = true;
+  try {
+    const res  = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify(payload) });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    okEl.textContent = `✓ Saved as ${data.id}`;
+    okEl.classList.add('show');
+    btn.textContent = 'Saved!';
+    setTimeout(() => { closeAddModal(); fetchFromScript(); }, 1200);
+  } catch (err) {
+    errEl.textContent = '✗ ' + err.message;
+    errEl.classList.add('show');
+    btn.textContent = 'Save Opportunity';
+    btn.disabled = false;
+  }
+}
+
+// ── Mark Applied ──────────────────────────────────────────────
+async function markApplied(id, btn) {
+  if (!SCRIPT_URL) { alert('Deploy appsscript.gs first.'); return; }
+  btn.textContent = '⏳…'; btn.disabled = true;
+  try {
+    const res  = await fetch(SCRIPT_URL + '?action=markApplied&id=' + encodeURIComponent(id));
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    btn.textContent = '✓ Applied'; btn.classList.add('done');
+    const opp = allOpps.find(x => x.ID === id);
+    if (opp) { opp.Applied = 'TRUE'; opp.Status = 'submitted'; }
+    renderStats(); renderActionCards(); renderHighlightCards(); applyFilters();
+  } catch (err) {
+    btn.textContent = '✗ Failed'; btn.disabled = false;
+    console.error(err);
+  }
+}
+
+// ── Set Priority ─────────────────────────────────────────────
+async function setPriority(id, priority, btn) {
+  if (!SCRIPT_URL) { alert('Deploy appsscript.gs first.'); return; }
+  btn.textContent = '⏳…'; btn.disabled = true;
+  try {
+    const res  = await fetch(SCRIPT_URL + '?action=setPriority&id=' + encodeURIComponent(id) + '&priority=' + encodeURIComponent(priority));
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    const opp = allOpps.find(x => x.ID === id);
+    if (opp) { opp.Priority = priority; }
+    // swap button label
+    btn.textContent = priority === 'High' ? '↓ Set Normal' : '⭐ Set High';
+    btn.onclick = () => setPriority(id, priority === 'High' ? 'Normal' : 'High', btn);
+    btn.disabled = false;
+    renderHighlightCards(); applyFilters();
+  } catch (err) {
+    btn.textContent = '✗ Failed'; btn.disabled = false;
+    console.error(err);
+  }
+}
+
+// ── Scan ──────────────────────────────────────────────────────
+async function runScan() {
+  const btn = document.getElementById('scan-btn');
+  if (!SCRIPT_URL) { alert('Set SCRIPT_URL first.'); return; }
+  btn.textContent = '⏳ Scanning…'; btn.disabled = true;
+  try {
+    const res  = await fetch(SCRIPT_URL + '?action=scan');
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    const added = data.added || 0;
+    btn.textContent = added > 0 ? `✓ +${added} found` : '✓ Nothing new';
+    setTimeout(() => { btn.textContent = '⚡ Scan sources'; btn.disabled = false; }, 3000);
+    if (added > 0) fetchFromScript();
+  } catch (e) {
+    btn.textContent = '✗ Failed'; btn.disabled = false;
+  }
+}
+
+// ── Claude panel ──────────────────────────────────────────────
+function toggleClaudePanel() {
+  const p = document.getElementById('claude-panel');
+  p.classList.toggle('show');
+  if (p.classList.contains('show')) document.getElementById('claude-url-input').focus();
+}
+
+function openWithClaude() {
+  const url = document.getElementById('claude-url-input').value.trim();
+  if (!url) { document.getElementById('claude-url-input').focus(); return; }
+  const prompt = `Add this opportunity to my lovelee tracker: ${url}
+
+Fetch the page and extract: Title, Organization, Type (funding / festival / open-call / event / gig / radio), Status (open / watching), Deadline (yyyy-mm-dd or "rolling"), Amount, Region, Eligibility, Notes.
+
+Set Priority to "High" if it's a major international festival, significant funding round, or career-defining opportunity. Otherwise "Normal".
+
+POST to: ${SCRIPT_URL || '[set SCRIPT_URL]'}
+Method: POST, Content-Type: application/json, body: JSON with all fields above.
+
+Confirm what was added when done.`;
+  navigator.clipboard.writeText(prompt).then(() => {
+    const c = document.getElementById('claude-copied');
+    c.classList.add('show');
+    setTimeout(() => c.classList.remove('show'), 4000);
+  }).catch(() => {
+    showPromptModal('Add via Claude', prompt, null, null);
+  });
+  document.getElementById('claude-url-input').value = '';
+}
+
+// ── Newsletters ───────────────────────────────────────────────
+function renderNewsletters() {
+  const list    = document.getElementById('newsletter-list');
+  const sub     = document.getElementById('newsletter-sub');
+  const saved   = JSON.parse(localStorage.getItem('nl-done') || '[]');
+  const doneSet = new Set(saved);
+  const done    = NEWSLETTERS.filter(n => doneSet.has(n.id)).length;
+
+  sub.textContent = done === NEWSLETTERS.length
+    ? '✓ All signed up — Claude scans these for open calls automatically'
+    : `${done} / ${NEWSLETTERS.length} signed up — Claude scans Gmail for open calls from these`;
+
+  const nlRows = NEWSLETTERS.map(n => {
+    const checked = doneSet.has(n.id);
+    return `<div class="newsletter-row ${checked ? 'done' : ''}" id="nlrow-${n.id}">
+      <input type="checkbox" ${checked ? 'checked' : ''} onchange="toggleNewsletter_item('${n.id}', this.checked)">
+      <div class="newsletter-name">${esc(n.name)}</div>
+      ${n.note ? `<div class="newsletter-note">${esc(n.note)}</div>` : '<div class="newsletter-note"></div>'}
+      <a href="${esc(n.url)}" target="_blank" rel="noopener" class="btn btn-ghost btn-xs">Sign up ↗</a>
+    </div>`;
+  }).join('');
+
+  const today = new Date(); today.setHours(0,0,0,0);
+  const manualDates = JSON.parse(localStorage.getItem('manual-dates') || '{}');
+
+  const manualRows = MANUAL_SOURCES.map(m => {
+    const lastStr  = manualDates[m.id];
+    const lastDate = lastStr ? new Date(lastStr) : null;
+    const daysAgo  = lastDate ? Math.floor((today - lastDate) / 86400000) : null;
+    const overdue  = daysAgo === null || daysAgo >= m.interval;
+
+    let ageText, ageClass;
+    if (daysAgo === null)       { ageText = 'Never done'; ageClass = 'overdue'; }
+    else if (daysAgo === 0)     { ageText = 'Done today ✓'; ageClass = ''; }
+    else if (overdue)           { ageText = daysAgo + 'd ago — do this'; ageClass = 'overdue'; }
+    else                        { ageText = daysAgo + 'd ago'; ageClass = ''; }
+
+    const openBtn = m.url
+      ? `<a href="${esc(m.url)}" target="_blank" rel="noopener" class="btn btn-ghost btn-xs">Open ↗</a>`
+      : '';
+    const pdfBtn = m.type === 'pdf'
+      ? `<button class="btn btn-ghost btn-xs" onclick="setPdfTab('image');document.getElementById('pdf-overlay').classList.add('show')">📄 Add from PDF</button>`
+      : '';
+    const doneBtn = `<button class="btn btn-ghost btn-xs" style="color:var(--green)" onclick="markManualDone('${m.id}')">✓ Done</button>`;
+
+    return `<div class="manual-row ${overdue ? 'overdue' : ''}" id="msrow-${m.id}">
+      <div class="manual-name">${overdue ? '⚠️ ' : ''}${esc(m.name)}</div>
+      <div class="newsletter-note" style="font-size:.72rem;color:var(--hint)">${esc(m.note)}</div>
+      <div class="manual-age ${ageClass}">${ageText}</div>
+      ${openBtn}${pdfBtn}${doneBtn}
+    </div>`;
+  }).join('');
+
+  list.innerHTML =
+    `<div class="newsletter-progress">
+      <span>📧 Newsletters — ${done} of ${NEWSLETTERS.length} signed up</span>
+      <button class="section-toggle-btn" onclick="markAllNewsletters()" style="font-size:.7rem;padding:3px 9px">Mark all done</button>
+    </div>` +
+    nlRows +
+    `<div class="newsletter-progress" style="border-top:2px solid var(--b1)">
+      <span>🌐 Manual checks — export PDF or visit and paste URLs</span>
+    </div>` +
+    manualRows;
+}
+
+function toggleNewsletter_item(id, checked) {
+  const saved = new Set(JSON.parse(localStorage.getItem('nl-done') || '[]'));
+  checked ? saved.add(id) : saved.delete(id);
+  localStorage.setItem('nl-done', JSON.stringify([...saved]));
+  const row = document.getElementById('nlrow-' + id);
+  if (row) row.classList.toggle('done', checked);
+  updateNewsletterSubtitle();
+}
+
+function markManualDone(id) {
+  const dates = JSON.parse(localStorage.getItem('manual-dates') || '{}');
+  dates[id] = new Date().toISOString().split('T')[0];
+  localStorage.setItem('manual-dates', JSON.stringify(dates));
+  renderNewsletters();
+  updateNewsletterSubtitle();
+}
+
+function markAllNewsletters() {
+  const all = NEWSLETTERS.map(n => n.id);
+  localStorage.setItem('nl-done', JSON.stringify(all));
+  renderNewsletters();
+}
+
+function updateNewsletterSubtitle() {
+  const sub      = document.getElementById('newsletter-sub');
+  const saved    = JSON.parse(localStorage.getItem('nl-done') || '[]');
+  const done     = saved.filter(s => NEWSLETTERS.find(n => n.id === s)).length;
+  const dates    = JSON.parse(localStorage.getItem('manual-dates') || '{}');
+  const today    = new Date(); today.setHours(0,0,0,0);
+  const overdue  = MANUAL_SOURCES.filter(m => {
+    const d = dates[m.id] ? new Date(dates[m.id]) : null;
+    return !d || Math.floor((today - d) / 86400000) >= m.interval;
+  });
+  if (overdue.length) {
+    sub.textContent = `⚠️ ${overdue.length} manual check${overdue.length > 1 ? 's' : ''} overdue — ${done}/${NEWSLETTERS.length} newsletters signed up`;
+    sub.style.color = 'var(--amber)';
+  } else {
+    sub.textContent = `${done}/${NEWSLETTERS.length} newsletters signed up · all checks up to date`;
+    sub.style.color = '';
+  }
+}
+
+function toggleNewsletter() {
+  const list = document.getElementById('newsletter-list');
+  const btn  = document.getElementById('newsletter-toggle');
+  const collapsed = list.classList.toggle('collapsed');
+  btn.textContent = collapsed ? 'Show ↓' : 'Hide ↑';
+  if (!collapsed) renderNewsletters();
+}
+
+// ── Morning briefing (manual trigger) ────────────────────────
+function runMorningBriefing() {
+  const prompt = `Run my lovelee morning outreach briefing now.
+
+Read my opportunity tracker:
+GET ${SCRIPT_URL}
+
+Read my Radio tab:
+GET ${SCRIPT_URL}?action=listRadio
+
+Then follow the full briefing routine:
+1. Filter opportunities: status=open or (watching + deadline within 60 days), not already applied
+2. Filter radio: Last Result ≠ played, Last Submitted empty or >60 days ago
+3. Always-open: Fritz Lokalmatadoren (musik@fritz.de, paid session, German), ByteFM (redaktion@byte.fm, German), BBC Introducing (upload at bbc.co.uk/music/introducing)
+4. Pick the 5 most actionable for INCOME or PERFORMANCES today
+5. Write 5 complete ready-to-send emails (under 150 words each, specific opener, warm not try-hard)
+   - Artist: lovelee (Leon Byvanck), Berlin indie pop, between Steve Lacy and Clairo
+   - Live: touring guitarist for Dilla — 150+ shows, Hurricane, Southside, Superbloom, Chemnitz 2025 opening ceremony
+   - TV: ProSieben, MDR, ARD, ZDF · 2M+ organic TikTok views · GEMA member, KSK registered
+   - Debut EP Storm Chasers: June 2026 · Spotify: https://open.spotify.com/artist/0ulcfO2JDsDuhgfKPGuTVo
+   - Press folder: https://drive.google.com/drive/folders/1IOBNqZQB_vBXt-1O403StX-ih5IzhZXD
+   - German for .de orgs, English otherwise
+6. Save each as a Gmail draft from itsloveleeee@gmail.com (do NOT send)
+7. Send one digest email to itsloveleeee@gmail.com with subject "☀️ lovelee morning — [today's date] — [N] drafts ready"
+   List each draft: name, one-line reason, URL, deadline or "ongoing"
+
+Go.`;
+  showPromptModal('morning briefing', prompt, null, null);
+}
+
+// ── PDF modal ─────────────────────────────────────────────────
+function setPdfTab(tab) {
+  ['text','url','image'].forEach(t => {
+    document.getElementById(`pdf-panel-${t}`).style.display = t === tab ? 'block' : 'none';
+    const btn = document.getElementById(`pdf-tab-${t}`);
+    btn.style.background = t === tab ? 'var(--accent)' : 'var(--surface)';
+    btn.style.color      = t === tab ? '#fff' : 'var(--muted)';
+  });
+  if (tab === 'image') {
+    // Populate the image-PDF prompt
+    const p = `Add all the opportunities in this document to my lovelee tracker.
+
+For each funding grant, festival, open call, residency, or music opportunity you find, extract:
+- Title, Organization, Type (funding / festival / open-call / event / gig), Status (open / watching / closed)
+- Deadline (yyyy-mm-dd or "rolling"), Amount, Region, Eligibility, Notes
+
+Priority: "High" if major international festival or significant grant, otherwise "Normal".
+
+POST each one to: ${SCRIPT_URL || '[set SCRIPT_URL]'}
+Method: POST, Content-Type: application/json, body: JSON with those fields.
+
+Confirm what was added when done.`;
+    document.getElementById('pdf-image-prompt').textContent = p;
+  }
+}
+
+function copyImagePdfPrompt() {
+  const text = document.getElementById('pdf-image-prompt').textContent;
+  navigator.clipboard.writeText(text).catch(() => {});
+  event.target.textContent = '✓ Copied!';
+  setTimeout(() => { event.target.textContent = 'Copy prompt'; }, 2000);
+}
+
+// ── PDF URL prompt ────────────────────────────────────────────
+function generateUrlPdfPrompt() {
+  const url = document.getElementById('pdf-url-input').value.trim();
+  if (!url) { document.getElementById('pdf-url-input').focus(); return; }
+  const prompt = `Fetch this PDF URL and add all the opportunities to my lovelee tracker.
+
+PDF URL: ${url}
+
+Read every funding grant, festival, open call, residency, or music opportunity in the document. For each one, extract:
+- Title, Organization, Type (funding / festival / open-call / event / gig), Status (open / watching / closed)
+- Deadline (yyyy-mm-dd or "rolling"), Amount, Region, Eligibility, Notes
+
+Priority: "High" if major international festival or significant grant, otherwise "Normal".
+
+First GET the tracker to avoid duplicates: ${SCRIPT_URL || '[set SCRIPT_URL]'}
+Then POST each new opportunity (skip any already listed for the same org in the last 14 days).
+Method: POST, Content-Type: application/json, body: JSON with those fields.
+
+Confirm what was added when done.`;
+  document.getElementById('pdf-overlay').classList.remove('show');
+  document.getElementById('pdf-url-input').value = '';
+  showPromptModal('PDF URL', prompt, null, null);
+}
+
+// ── PDF text prompt ───────────────────────────────────────────
+function generatePdfPrompt() {
+  const text = document.getElementById('pdf-text').value.trim();
+  if (!text) { document.getElementById('pdf-text').focus(); return; }
+  const prompt = `Add opportunities from this document to my lovelee tracker.
+
+DOCUMENT TEXT:
+---
+${text}
+---
+
+Extract every funding grant, festival, open call, residency, or music opportunity from the text above. For each one, extract:
+- Title, Organization, Type (funding / festival / open-call / event / gig), Status (open / watching / closed)
+- Deadline (yyyy-mm-dd or "rolling" or "watching"), Amount, Region, Eligibility, Notes (key requirements or restrictions)
+- Priority: "High" if major international festival or significant grant. Otherwise "Normal".
+
+POST each one to: ${SCRIPT_URL || '[set SCRIPT_URL]'}
+Method: POST, Content-Type: application/json, body: JSON with those fields.
+
+Confirm what was added when done.`;
+  document.getElementById('pdf-overlay').classList.remove('show');
+  document.getElementById('pdf-text').value = '';
+  showPromptModal('PDF document', prompt, null, null);
+}
+
+// ── Helpers ───────────────────────────────────────────────────
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function pd(s) {
+  if (!s) return null;
+  const m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m ? new Date(+m[1], +m[2]-1, +m[3]) : null;
+}
+function fd(s) {
+  if (!s) return '—';
+  const d = pd(s);
+  if (!d) return esc(s);
+  return d.toLocaleDateString('de-DE', {day:'2-digit', month:'short', year:'numeric'});
+}
+function dlClass(s, status) {
+  if (['submitted','closed','ineligible'].includes(status)) return 'dl-ok';
+  const d = pd(s); if (!d) return 'dl-ok';
+  const today = new Date(); today.setHours(0,0,0,0);
+  const diff = Math.ceil((d - today) / 86400000);
+  if (diff < 0)  return 'dl-past';
+  if (diff <= 7) return 'dl-urgent';
+  if (diff <= 21)return 'dl-soon';
+  return 'dl-ok';
+}
+</script>
+</body>
+</html>
