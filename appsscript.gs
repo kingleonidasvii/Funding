@@ -1,24 +1,24 @@
 // ============================================================
-// lovelee ‚Äî Opportunity Tracker ‚Äî Google Apps Script Web App
+// lovelee — Opportunity Tracker — Google Apps Script Web App
 // ============================================================
 //
 // DEPLOYMENT INSTRUCTIONS
 // -----------------------
 // 1. Open the Google Sheet: https://docs.google.com/spreadsheets/d/1Si1_GF1DVPq7ZNfH5NPOxQaH6gJDtiDDbqTUYT7kQg4/edit
-// 2. Extensions ‚Üí Apps Script
+// 2. Extensions → Apps Script
 // 3. Delete any existing code. Paste the entire contents of this file.
 // 4. Click Save (Cmd+S). Name the project "lovelee-opportunity-tracker".
-// 5. Click Deploy ‚Üí New deployment ‚Üí gear icon ‚Üí Web app.
-// 6. Execute as: Me | Who has access: Anyone ‚Üí Deploy ‚Üí Authorize ‚Üí Allow.
+// 5. Click Deploy → New deployment → gear icon → Web app.
+// 6. Execute as: Me | Who has access: Anyone → Deploy → Authorize → Allow.
 // 7. Copy the Web app URL (https://script.google.com/macros/s/AKfy.../exec)
 // 8. Paste it into SCRIPT_URL in index.html on GitHub. Commit.
 //
-// AFTER CODE CHANGES: Deploy ‚Üí Manage deployments ‚Üí Edit ‚Üí New version ‚Üí Deploy
-// URL stays the same ‚Äî no need to update index.html again.
+// AFTER CODE CHANGES: Deploy → Manage deployments → Edit → New version → Deploy
+// URL stays the same — no need to update index.html again.
 //
 // ONE-TIME SETUP (run these manually in the editor after first deploy):
-//   Run ‚Üí setupPriorityColumn   ‚Äî adds Priority column to the Sheet
-//   Run ‚Üí setupMonthlyTrigger   ‚Äî sets up automatic scan on 1st of month
+//   Run → setupPriorityColumn   — adds Priority column to the Sheet
+//   Run → setupMonthlyTrigger   — sets up automatic scan on 1st of month
 //
 // SHEET COLUMNS (Opportunities tab):
 //   ID | Title | Organization | Type | Status | Deadline | Amount |
@@ -30,7 +30,7 @@ const SHEET_ID          = '1Si1_GF1DVPq7ZNfH5NPOxQaH6gJDtiDDbqTUYT7kQg4';
 const OPPORTUNITIES_TAB = 'Opportunities';
 const RADIO_TAB         = 'Radio';
 
-// ‚îÄ‚îÄ Helpers ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+// ── Helpers ──────────────────────────────────────────────────
 
 function getSheet() {
   return SpreadsheetApp.openById(SHEET_ID).getSheetByName(OPPORTUNITIES_TAB);
@@ -49,7 +49,7 @@ function rowToObject(headers, row) {
     if (v instanceof Date) {
       obj[h] = Utilities.formatDate(v, 'Europe/Berlin', 'yyyy-MM-dd');
     } else if (typeof v === 'number' && CURRENCY_FIELDS.has(h)) {
-      obj[h] = '‚Ç¨' + v.toLocaleString('de-DE');
+      obj[h] = '€' + v.toLocaleString('de-DE');
     } else {
       obj[h] = (v !== undefined && v !== null) ? String(v) : '';
     }
@@ -74,7 +74,7 @@ function nextId(sheet, headers) {
   return 'OPP' + String(max + 1).padStart(3, '0');
 }
 
-// ‚îÄ‚îÄ GET ‚Äî list all opportunities, run scan, or mark applied ‚îÄ‚îÄ
+// ── GET — list all opportunities, run scan, or mark applied ──
 
 function doGet(e) {
   try {
@@ -99,7 +99,7 @@ function doGet(e) {
   }
 }
 
-// ‚îÄ‚îÄ POST ‚Äî add a new opportunity ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+// ── POST — add a new opportunity ─────────────────────────────
 
 function doPost(e) {
   try {
@@ -130,7 +130,7 @@ function doPost(e) {
   }
 }
 
-// ‚îÄ‚îÄ Mark Applied (called from app's "Mark Applied" button) ‚îÄ‚îÄ‚îÄ
+// ── Mark Applied (called from app's "Mark Applied" button) ───
 
 function markApplied(id) {
   if (!id) return { error: 'No ID provided' };
@@ -155,7 +155,7 @@ function markApplied(id) {
   return { error: 'ID not found: ' + id };
 }
 
-// ‚îÄ‚îÄ Set priority on a single row ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+// ── Set priority on a single row ─────────────────────────────
 function setPriorityById(id, priority) {
   if (!id) return { error: 'No ID provided' };
   if (priority !== 'High' && priority !== 'Normal') return { error: 'Priority must be High or Normal' };
@@ -178,7 +178,7 @@ function setPriorityById(id, priority) {
   return { error: 'ID not found: ' + id };
 }
 
-// ‚îÄ‚îÄ Update a single field on any row ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+// ── Update a single field on any row ─────────────────────────
 function updateField(id, field, value) {
   if (!id || !field) return { error: 'Missing id or field' };
   const sheet   = getSheet();
@@ -199,7 +199,7 @@ function updateField(id, field, value) {
   return { error: 'ID not found: ' + id };
 }
 
-// ‚îÄ‚îÄ One-time setup: add Priority column if missing ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+// ── One-time setup: add Priority column if missing ───────────
 
 function setupPriorityColumn() {
   const sheet   = getSheet();
@@ -227,7 +227,7 @@ function setupPriorityColumn() {
   Logger.log('Priority column added and pre-filled.');
 }
 
-// ‚îÄ‚îÄ Reset priorities ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+// ── Reset priorities ──────────────────────────────────────────
 // Run once to bulk-correct all existing rows using HIGH_PRIORITY_ORGS.
 // High = org name matches one of the known career-defining sources.
 function resetPriorities() {
@@ -253,12 +253,12 @@ function resetPriorities() {
   Logger.log('resetPriorities complete: ' + changed + ' rows updated.');
 }
 
-// ‚îÄ‚îÄ Monitor sources ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+// ── Monitor sources ───────────────────────────────────────────
 // These are known high-priority sources that get RE-CHECKED every
 // weekly scan regardless of whether they're already in the sheet.
 // Goal: catch when a funding round or festival open call goes live.
 // When detected as open, the existing watching row is upgraded to
-// "open" ‚Äî or a new row is added if none exists.
+// "open" — or a new row is added if none exists.
 
 // High = genuinely career-defining for an indie Berlin artist. Everything else is Normal.
 const HIGH_PRIORITY_ORGS = new Set([
@@ -270,15 +270,15 @@ const HIGH_PRIORITY_ORGS = new Set([
 ]);
 
 const MONITOR_SOURCES = [
-  // German funding ‚Äî rounds open/close on a schedule
+  // German funding — rounds open/close on a schedule
   { name:'Initiative Musik',           url:'https://www.initiative-musik.de/foerderung/',                 priority:'High',   type:'funding'  },
   { name:'Musicboard Berlin',          url:'https://www.musicboard-berlin.de/foerderung/',                priority:'High',   type:'funding'  },
-  { name:'GEMA Kulturf√∂rderung',       url:'https://www.gema.de/kulturfoerderung-online',                 priority:'Normal', type:'funding'  },
+  { name:'GEMA Kulturförderung',       url:'https://www.gema.de/kulturfoerderung-online',                 priority:'Normal', type:'funding'  },
   { name:'Musikfonds',                 url:'https://www.musikfonds.de/foerderung/',                       priority:'Normal', type:'funding'  },
-  { name:'Fonds Darstellende K√ºnste',  url:'https://www.fonds-daku.de/foerderung/',                       priority:'Normal', type:'funding'  },
+  { name:'Fonds Darstellende Künste',  url:'https://www.fonds-daku.de/foerderung/',                       priority:'Normal', type:'funding'  },
   { name:'German Music Export',        url:'https://www.german-music-export.de/en/funding/',              priority:'Normal', type:'funding'  },
   { name:'Berlin Music Commission',    url:'https://www.berlin-music-commission.de',                      priority:'Normal', type:'funding'  },
-  { name:'Berlin Senate ‚Äî Musik',      url:'https://www.berlin.de/sen/kultur/foerderung/antragsfristen/',priority:'Normal', type:'funding'  },
+  { name:'Berlin Senate — Musik',      url:'https://www.berlin.de/sen/kultur/foerderung/antragsfristen/',priority:'Normal', type:'funding'  },
   // EU funding
   { name:'Creative Europe',            url:'https://culture.ec.europa.eu/calls',                         priority:'High',   type:'funding'  },
   { name:'PRS Foundation UK',          url:'https://prsfoundation.com/funding-support/funding/',         priority:'Normal', type:'funding'  },
@@ -297,21 +297,21 @@ const MONITOR_SOURCES = [
   { name:'Glastonbury Emerging Talent',url:'https://www.glastonburyfestivals.co.uk/information/emerging-talent/', priority:'Normal', type:'festival' },
 ];
 
-// Strong signals that a round/call is currently open ‚Äî not just that the
+// Strong signals that a round/call is currently open — not just that the
 // page mentions funding in general. These go beyond the general KEYWORDS list.
 const OPEN_NOW_KEYWORDS = [
-  // German ‚Äî active round language
+  // German — active round language
   'jetzt bewerben', 'jetzt einreichen', 'bewerbungsschluss', 'bewerbungsfrist',
-  'einreichfrist', 'einreichungsschluss', 'antragstellung m√∂glich',
-  'antragsschluss', 'aktuelle ausschreibung', 'runde ist ge√∂ffnet',
-  'bewerbungen sind ab', 'bewerbung einreichen', 'f√∂rderantrag stellen',
-  // English ‚Äî active round language
+  'einreichfrist', 'einreichungsschluss', 'antragstellung möglich',
+  'antragsschluss', 'aktuelle ausschreibung', 'runde ist geöffnet',
+  'bewerbungen sind ab', 'bewerbung einreichen', 'förderantrag stellen',
+  // English — active round language
   'applications are open', 'apply now', 'submissions are open', 'now accepting',
   'open for applications', 'call is open', 'deadline for applications',
   'submit your application', 'applications close', 'apply before',
   'application deadline', 'open call', 'apply by',
   // French
-  'candidatures ouvertes', 'd√©p√¥t de candidature', 'date limite de candidature',
+  'candidatures ouvertes', 'dépôt de candidature', 'date limite de candidature',
   'appel ouvert', 'soumettre votre candidature',
   // Dutch
   'aanvragen mogelijk', 'aanmeldingsdeadline', 'open voor aanmeldingen',
@@ -325,7 +325,7 @@ function isFutureDeadline(dateStr) {
   return d > now && d < sixMonths;
 }
 
-// Monitor known sources ‚Äî re-checks every week, upgrades watching‚Üíopen
+// Monitor known sources — re-checks every week, upgrades watching→open
 function monitorSources() {
   const sheet   = getSheet();
   const data    = sheet.getDataRange().getValues();
@@ -387,27 +387,27 @@ function monitorSources() {
       const idxOf = col => headers.indexOf(col);
 
       if (watchingRow) {
-        // Upgrade: watching ‚Üí open
+        // Upgrade: watching → open
         const r = watchingRow._row;
         if (idxOf('Status')       >= 0) sheet.getRange(r, idxOf('Status') + 1).setValue('open');
         if (idxOf('Deadline')     >= 0) sheet.getRange(r, idxOf('Deadline') + 1).setValue(deadline);
         if (idxOf('Date Updated') >= 0) sheet.getRange(r, idxOf('Date Updated') + 1).setValue(today);
         if (idxOf('Notes')        >= 0) {
-          const note = 'Auto-detected OPEN ' + today + (deadline !== 'rolling' ? ' ¬∑ Deadline: ' + deadline : '') + '. Verify on site.';
+          const note = 'Auto-detected OPEN ' + today + (deadline !== 'rolling' ? ' · Deadline: ' + deadline : '') + '. Verify on site.';
           sheet.getRange(r, idxOf('Notes') + 1).setValue(note);
         }
         // Also update the title to remove "(watching)"
         if (idxOf('Title') >= 0) {
           const oldTitle = watchingRow.Title || '';
-          sheet.getRange(r, idxOf('Title') + 1).setValue(oldTitle.replace(' (watching)', '') + ' ‚Äî Open Call');
+          sheet.getRange(r, idxOf('Title') + 1).setValue(oldTitle.replace(' (watching)', '') + ' — Open Call');
         }
         upgraded++;
       } else {
-        // No watching row ‚Äî add fresh
+        // No watching row — add fresh
         const row = headers.map(h => {
           switch (h) {
             case 'ID':           return nextId(sheet, headers);
-            case 'Title':        return src.name + ' ‚Äî Open Call (auto-detected)';
+            case 'Title':        return src.name + ' — Open Call (auto-detected)';
             case 'Organization': return src.name;
             case 'Type':         return src.type || 'funding';
             case 'Status':       return 'open';
@@ -415,7 +415,7 @@ function monitorSources() {
             case 'Priority':     return src.priority || 'Normal';
             case 'Source':       return src.name;
             case 'URL':          return src.url;
-            case 'Notes':        return 'Auto-detected OPEN ' + today + (deadline !== 'rolling' ? ' ¬∑ Deadline: ' + deadline : '') + '. Verify on site.';
+            case 'Notes':        return 'Auto-detected OPEN ' + today + (deadline !== 'rolling' ? ' · Deadline: ' + deadline : '') + '. Verify on site.';
             case 'Date Added':   return today;
             case 'Date Updated': return today;
             case 'Applied':      return 'FALSE';
@@ -434,25 +434,25 @@ function monitorSources() {
   return { monitored: MONITOR_SOURCES.length, upgraded, added };
 }
 
-// ‚îÄ‚îÄ Scan sources ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+// ── Scan sources ─────────────────────────────────────────────
 // Fetches public source pages, detects active open calls by keyword,
 // and appends new "watching" rows. Login-required sources (e.g.
 // Music Group Berlin) should be handled by uploading their PDF
-// in Claude chat ‚Äî Claude will extract and add entries via POST.
+// in Claude chat — Claude will extract and add entries via POST.
 
 const SCAN_SOURCES = [
-  // ‚îÄ‚îÄ Germany: Funding ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+  // ── Germany: Funding ─────────────────────────────────────
   { name:'Musicboard Berlin',           url:'https://www.musicboard-berlin.de/foerderung/',                   priority:'High',   type:'funding'  },
   { name:'Initiative Musik',            url:'https://www.initiative-musik.de/foerderung/',                   priority:'High',   type:'funding'  },
   { name:'kreativkultur.berlin',        url:'https://kreativkultur.berlin',                                  priority:'Normal', type:'funding'  },
   { name:'Berlin Music Commission',     url:'https://www.berlin-music-commission.de',                        priority:'Normal', type:'funding'  },
   { name:'Musikfonds',                  url:'https://www.musikfonds.de/foerderung/',                         priority:'Normal', type:'funding'  },
-  { name:'GEMA Kulturf√∂rderung',        url:'https://www.gema.de/kulturfoerderung-online',                   priority:'Normal', type:'funding'  },
+  { name:'GEMA Kulturförderung',        url:'https://www.gema.de/kulturfoerderung-online',                   priority:'Normal', type:'funding'  },
   { name:'German Music Export',         url:'https://www.german-music-export.de/en/funding/',                priority:'High',   type:'funding'  },
   { name:'Backstage PRO',               url:'https://www.backstage.de/ratgeber/foerderung/',                 priority:'Normal', type:'funding'  },
-  { name:'Fonds Darstellende K√ºnste',   url:'https://www.fonds-daku.de/foerderung/',                         priority:'Normal', type:'funding'  },
+  { name:'Fonds Darstellende Künste',   url:'https://www.fonds-daku.de/foerderung/',                         priority:'Normal', type:'funding'  },
 
-  // ‚îÄ‚îÄ Germany: Festivals & Major Stages ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+  // ── Germany: Festivals & Major Stages ────────────────────
   { name:'Reeperbahn Festival',         url:'https://www.reeperbahnfestival.com/artist-submission',         priority:'High',   type:'festival' },
   { name:'c/o pop Convention',          url:'https://copop.de/convention/',                                  priority:'High',   type:'festival' },
   { name:'SWR3 New Pop Festival',       url:'https://www.swr.de/swr3/musik/new-pop-festival/',               priority:'High',   type:'festival' },
@@ -472,19 +472,19 @@ const SCAN_SOURCES = [
   { name:'Immergut Festival',           url:'https://www.immergutrocken.de',                                 priority:'Normal', type:'festival' },
   { name:'Haldern Pop',                 url:'https://haldern-pop.de',                                        priority:'Normal', type:'festival' },
 
-  // ‚îÄ‚îÄ Germany: Radio & Media ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+  // ── Germany: Radio & Media ───────────────────────────────
   { name:'Fritz (rbb)',                 url:'https://www.fritz.de/programm/aktionen/',                       priority:'High',   type:'radio'    },
   { name:'ByteFM',                      url:'https://www.byte.fm/features/',                                 priority:'High',   type:'radio'    },
   { name:'radioeins (rbb)',             url:'https://www.radioeins.de/musik/',                                priority:'Normal', type:'radio'    },
   { name:'Deutschlandfunk Kultur',      url:'https://www.deutschlandfunkkultur.de/musik/',                   priority:'Normal', type:'radio'    },
   { name:'MDR Kultur',                  url:'https://www.mdr.de/mdr-kultur/radio/index.html',                priority:'Normal', type:'radio'    },
 
-  // ‚îÄ‚îÄ EU: Funding ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+  // ── EU: Funding ──────────────────────────────────────────
   { name:'Creative Europe',             url:'https://culture.ec.europa.eu/calls',                           priority:'High',   type:'funding'  },
   { name:'SHAPE+',                      url:'https://shapeplatform.eu/open-call/',                           priority:'High',   type:'open-call'},
   { name:'Liveurope',                   url:'https://liveurope.eu',                                          priority:'High',   type:'funding'  },
   { name:'Fonds Podiumkunsten NL',      url:'https://www.fondspodiumkunsten.nl/subsidies/',                  priority:'Normal', type:'funding'  },
-  { name:'√ñsterreichischer Musikfonds', url:'https://www.musikfonds.at/foerderungen/',                       priority:'Normal', type:'funding'  },
+  { name:'Österreichischer Musikfonds', url:'https://www.musikfonds.at/foerderungen/',                       priority:'Normal', type:'funding'  },
   { name:'Pro Helvetia Switzerland',    url:'https://prohelvetia.ch/en/funding/',                            priority:'Normal', type:'funding'  },
   { name:'Music Finland Export',        url:'https://musicfinland.com/en/funding/',                          priority:'Normal', type:'funding'  },
   { name:'Music Norway Export',         url:'https://musicnorway.no/funding/',                               priority:'Normal', type:'funding'  },
@@ -494,22 +494,22 @@ const SCAN_SOURCES = [
   { name:'Arts Council England',        url:'https://www.artscouncil.org.uk/projectgrants',                  priority:'Normal', type:'funding'  },
   { name:'CNM France',                  url:'https://cnm.fr/aides/',                                         priority:'High',   type:'funding'  },
 
-  // ‚îÄ‚îÄ Netherlands ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+  // ── Netherlands ──────────────────────────────────────────
   { name:'Eurosonic Noorderslag',       url:'https://www.eurosonic-noorderslag.nl/showcases/',               priority:'High',   type:'festival' },
   { name:'Lowlands Festival',           url:'https://www.lowlands.nl',                                       priority:'High',   type:'festival' },
   { name:'Down the Rabbit Hole',        url:'https://www.downtherabbithole.nl',                              priority:'High',   type:'festival' },
   { name:'Best Kept Secret NL',         url:'https://www.bestkeptsecret.nl',                                 priority:'High',   type:'festival' },
 
-  // ‚îÄ‚îÄ Belgium ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+  // ── Belgium ──────────────────────────────────────────────
   { name:'Pukkelpop Belgium',           url:'https://www.pukkelpop.be',                                      priority:'High',   type:'festival' },
   { name:'Rock Werchter Belgium',       url:'https://www.rockwerchter.be',                                   priority:'High',   type:'festival' },
   { name:'Dour Festival Belgium',       url:'https://www.dourfestival.eu',                                   priority:'Normal', type:'festival' },
   { name:'Glimps Festival Ghent',       url:'https://glimps.be',                                             priority:'Normal', type:'festival' },
 
-  // ‚îÄ‚îÄ Austria ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+  // ── Austria ──────────────────────────────────────────────
   { name:'Waves Vienna',                url:'https://wavesvienna.com',                                       priority:'High',   type:'festival' },
 
-  // ‚îÄ‚îÄ France ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+  // ── France ───────────────────────────────────────────────
   { name:'MAMA Paris',                  url:'https://www.mama-event.com/en/',                                priority:'High',   type:'festival' },
   { name:'Trans Musicales Rennes',      url:'https://www.lestrans.com/les-trans-musicales/',                 priority:'High',   type:'festival' },
   { name:'La Route du Rock',            url:'https://www.laroutedurock.com',                                 priority:'High',   type:'festival' },
@@ -518,7 +518,7 @@ const SCAN_SOURCES = [
   { name:'Rock en Seine Paris',         url:'https://www.rockenseine.com',                                   priority:'High',   type:'festival' },
   { name:'Pitchfork Music Fest Paris',  url:'https://www.pitchforkparis.com',                                priority:'High',   type:'festival' },
 
-  // ‚îÄ‚îÄ UK ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+  // ── UK ───────────────────────────────────────────────────
   { name:'The Great Escape Brighton',   url:'https://greatescapefestival.com',                               priority:'High',   type:'festival' },
   { name:'Green Man Festival',          url:'https://www.greenman.net',                                      priority:'High',   type:'festival' },
   { name:'End of the Road',             url:'https://endoftheroadfestival.com',                              priority:'Normal', type:'festival' },
@@ -530,25 +530,25 @@ const SCAN_SOURCES = [
   { name:'Celtic Connections Glasgow',  url:'https://www.celticconnections.com',                             priority:'High',   type:'festival' },
   { name:'Output Belfast',              url:'https://outputbelfast.com',                                     priority:'High',   type:'festival' },
 
-  // ‚îÄ‚îÄ Ireland ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+  // ── Ireland ──────────────────────────────────────────────
   { name:'Other Voices Ireland',        url:'https://www.othervoices.ie',                                    priority:'High',   type:'festival' },
   { name:'Hard Working Class Heroes',   url:'https://www.hwch.net',                                          priority:'High',   type:'festival' },
   { name:'Electric Picnic Ireland',     url:'https://www.electricpicnic.ie',                                 priority:'High',   type:'festival' },
   { name:'First Music Contact Ireland', url:'https://fmc.ie/funding/',                                       priority:'Normal', type:'funding'  },
 
-  // ‚îÄ‚îÄ Scandinavia ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+  // ── Scandinavia ──────────────────────────────────────────
   { name:'Iceland Airwaves',            url:'https://icelandairwaves.is',                                    priority:'High',   type:'festival' },
   { name:'by:Larm Oslo',                url:'https://bylarm.no/en/',                                         priority:'High',   type:'festival' },
   { name:'Way Out West Gothenburg',     url:'https://www.wayoutwest.se',                                     priority:'High',   type:'festival' },
   { name:'Roskilde Festival',           url:'https://www.roskilde-festival.dk/en/',                          priority:'High',   type:'festival' },
-  { name:'√òya Festival Oslo',           url:'https://www.oyafestivalen.no',                                  priority:'High',   type:'festival' },
+  { name:'Øya Festival Oslo',           url:'https://www.oyafestivalen.no',                                  priority:'High',   type:'festival' },
   { name:'Flow Festival Helsinki',      url:'https://www.flowfestival.com',                                  priority:'High',   type:'festival' },
 
-  // ‚îÄ‚îÄ Southern Europe ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+  // ── Southern Europe ──────────────────────────────────────
   { name:'MIL Lisboa',                  url:'https://mil-lisboa.pt',                                         priority:'High',   type:'festival' },
   { name:'NOS Alive Portugal',          url:'https://nosalive.com',                                          priority:'High',   type:'festival' },
   { name:'Primavera Sound Barcelona',   url:'https://www.primaverasound.com',                                 priority:'High',   type:'festival' },
-  { name:'S√≥nar Barcelona',             url:'https://sonar.es/en/',                                          priority:'High',   type:'festival' },
+  { name:'Sónar Barcelona',             url:'https://sonar.es/en/',                                          priority:'High',   type:'festival' },
   { name:'Mad Cool Madrid',             url:'https://www.madcoolfestival.es',                                priority:'High',   type:'festival' },
   { name:'Bilbao BBK Live',             url:'https://www.bilbaobblive.com',                                  priority:'High',   type:'festival' },
   { name:'Linecheck Milan',             url:'https://www.linecheckmusic.com/en/',                            priority:'High',   type:'festival' },
@@ -556,44 +556,44 @@ const SCAN_SOURCES = [
   { name:'Medimex Bari',                url:'https://www.medimex.it',                                        priority:'Normal', type:'festival' },
   { name:'Sziget Festival Budapest',    url:'https://szigetfestival.com',                                    priority:'High',   type:'festival' },
 
-  // ‚îÄ‚îÄ Switzerland ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+  // ── Switzerland ──────────────────────────────────────────
   { name:'Montreux Jazz Festival',      url:'https://www.montreuxjazzfestival.com',                          priority:'High',   type:'festival' },
-  { name:'Pal√©o Festival Nyon',         url:'https://www.paleo.ch',                                          priority:'High',   type:'festival' },
+  { name:'Paléo Festival Nyon',         url:'https://www.paleo.ch',                                          priority:'High',   type:'festival' },
 
-  // ‚îÄ‚îÄ USA / Canada ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+  // ── USA / Canada ─────────────────────────────────────────
   { name:'SXSW Austin',                 url:'https://www.sxsw.com/music/applications/',                      priority:'High',   type:'festival' },
   { name:'M for Montreal',              url:'https://mformontreal.com/en/artists/',                          priority:'High',   type:'festival' },
   { name:'Folk Alliance International', url:'https://www.folkalliance.org/conference/',                      priority:'Normal', type:'festival' },
   { name:'CMW Toronto',                 url:'https://cmw.net/showcase-applications/',                        priority:'Normal', type:'festival' },
 
-  // ‚îÄ‚îÄ Global industry ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+  // ── Global industry ──────────────────────────────────────
   { name:'Womex',                       url:'https://www.womex.com/virtual/womex/apply',                     priority:'High',   type:'festival' },
   { name:'Womad',                       url:'https://womad.co.uk',                                           priority:'High',   type:'festival' },
 
-  // ‚îÄ‚îÄ Opportunity aggregators ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+  // ── Opportunity aggregators ───────────────────────────────────
   { name:'Ditto Music Opportunities',   url:'https://dittomusic.com/en/blog/latest-music-opportunities',    priority:'High',   type:'open-call' },
   { name:'Creatives Unite',             url:'https://creativesunite.eu/open-calls/',                        priority:'Normal', type:'open-call' },
   { name:'On the Move (Music Mobility)',url:'https://on-the-move.org/resources/funding',                    priority:'Normal', type:'funding'   },
 
-  // ‚îÄ‚îÄ More UK showcases ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+  // ── More UK showcases ────────────────────────────────────────
   { name:'Focus Wales',                 url:'https://focuswales.com',                                       priority:'Normal', type:'festival'  },
   { name:'SXSW London',                 url:'https://london.sxsw.com',                                      priority:'High',   type:'festival'  },
 
-  // ‚îÄ‚îÄ Central / Eastern Europe ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+  // ── Central / Eastern Europe ─────────────────────────────────
   { name:'MENT Ljubljana',              url:'https://ment.si',                                              priority:'High',   type:'festival'  },
 
-  // ‚îÄ‚îÄ Streaming platform emerging artist programs ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+  // ── Streaming platform emerging artist programs ───────────────
   { name:'Spotify RADAR',               url:'https://artists.spotify.com/blog/spotify-radar',               priority:'High',   type:'open-call' },
   { name:'Apple Music Up Next',         url:'https://artists.apple.com',                                    priority:'High',   type:'open-call' },
   { name:'Deezer Next',                 url:'https://www.deezer.com/en/deezer-next',                        priority:'High',   type:'open-call' },
   { name:'Amazon Music Breakthrough',   url:'https://music.amazon.com/breakthrough',                        priority:'Normal', type:'open-call' },
 
-  // ‚îÄ‚îÄ Awards & prizes ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+  // ── Awards & prizes ──────────────────────────────────────────
   { name:'EBBA Awards',                 url:'https://www.eurosonic-noorderslag.nl/ebba/',                   priority:'High',   type:'open-call' },
 
-  // ‚îÄ‚îÄ City government funding pages ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
-  { name:'Berlin Senate ‚Äî F√∂rderung Musik',  url:'https://www.berlin.de/sen/kultur/foerderung/antragsfristen/', priority:'High',   type:'funding'   },
-  { name:'Vienna MA7 ‚Äî Musikf√∂rderung',      url:'https://www.wien.gv.at/kultur/foerderungen-musik',           priority:'Normal', type:'funding'   },
+  // ── City government funding pages ───────────────────────────
+  { name:'Berlin Senate — Förderung Musik',  url:'https://www.berlin.de/sen/kultur/foerderung/antragsfristen/', priority:'High',   type:'funding'   },
+  { name:'Vienna MA7 — Musikförderung',      url:'https://www.wien.gv.at/kultur/foerderungen-musik',           priority:'Normal', type:'funding'   },
 ];
 
 const KEYWORDS = [
@@ -604,30 +604,30 @@ const KEYWORDS = [
   'call for entries','call for artists','now accepting','accepting submissions',
   'apply for','open applications','music grant','touring grant','artist fund',
   // German
-  'jetzt bewerben','bewerbung','f√∂rderantrag','einreichung','einreichen',
-  'frist','f√∂rderung','stipendium','bewerbungsschluss','ausschreibung',
-  'projektf√∂rderung','musikf√∂rderung','reisekostenf√∂rderung',
+  'jetzt bewerben','bewerbung','förderantrag','einreichung','einreichen',
+  'frist','förderung','stipendium','bewerbungsschluss','ausschreibung',
+  'projektförderung','musikförderung','reisekostenförderung',
   // Dutch
   'aanvragen','subsidie','aanmelding','open voor','aanmelden','indienen',
   'subsidieregeling','aanvraagronde','muzieksubsidie','open oproep',
   // French
-  'candidater','candidature','appel √†','dossier de candidature','soumettre',
-  'bourse','financement','date limite','appel ouvert','appel √† projets',
-  'd√©p√¥t de candidature','appel √† candidatures',
+  'candidater','candidature','appel à','dossier de candidature','soumettre',
+  'bourse','financement','date limite','appel ouvert','appel à projets',
+  'dépôt de candidature','appel à candidatures',
   // Spanish
-  'convocatoria','solicitud','inscripci√≥n','plazo','subvenci√≥n','beca',
-  'abrir convocatoria','presentar candidatura','fecha l√≠mite','open call',
-  'artistas emergentes','enviar demo','formulario de inscripci√≥n',
+  'convocatoria','solicitud','inscripción','plazo','subvención','beca',
+  'abrir convocatoria','presentar candidatura','fecha límite','open call',
+  'artistas emergentes','enviar demo','formulario de inscripción',
   // Italian
   'bando','candidatura','iscrizione','scadenza','contributo','borsa',
   'aperto alle candidature','chiama artisti','presentare domanda',
   'bando aperto','sovvenzione','call for artists',
   // Portuguese
-  'candidatura','inscri√ß√£o','prazo','bolsa','financiamento',
+  'candidatura','inscrição','prazo','bolsa','financiamento',
   'candidatar','submeter','chamada aberta','apoio',
   // Scandinavian (Swedish / Norwegian / Danish / Finnish)
-  'ans√∂kan','s√∏knad','ans√∂k','tilmeld','haku','stipend',
-  'open for s√∏knader','s√∂ka bidrag','musikstipendium','residens'
+  'ansökan','søknad','ansök','tilmeld','haku','stipend',
+  'open for søknader','söka bidrag','musikstipendium','residens'
 ];
 
 function scanSources() {
@@ -666,7 +666,7 @@ function scanSources() {
       const row = headers.map(h => {
         switch (h) {
           case 'ID':           return nextId(sheet, headers);
-          case 'Title':        return src.name + ' ‚Äî Open Call (auto-scanned)';
+          case 'Title':        return src.name + ' — Open Call (auto-scanned)';
           case 'Organization': return src.name;
           case 'Type':         return src.type || 'funding';
           case 'Status':       return 'watching';
@@ -695,7 +695,7 @@ function scanSources() {
   return { added, scanned: SCAN_SOURCES.length, timestamp: today };
 }
 
-// ‚îÄ‚îÄ Monthly auto-trigger ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+// ── Monthly auto-trigger ──────────────────────────────────────
 // Run setupMonthlyTrigger() ONCE manually to activate.
 
 function setupMonthlyTrigger() {
@@ -711,15 +711,15 @@ function runMonthlyScan() {
   Logger.log('Monthly scan: ' + JSON.stringify(result));
 }
 
-// ‚îÄ‚îÄ Radio tab ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+// ── Radio tab ────────────────────────────────────────────────
 // Columns: ID | Station | Country | Format | URL | Submit URL | Notes | Last Submitted | Last Result | Priority
 //
-// ONE-TIME SETUP: Run ‚Üí setupRadioTab() once to create the tab and seed the stations.
-// Afterwards the Radio tab is a persistent store ‚Äî update it via the app or directly.
+// ONE-TIME SETUP: Run → setupRadioTab() once to create the tab and seed the stations.
+// Afterwards the Radio tab is a persistent store — update it via the app or directly.
 
 const RADIO_SEED_DATA = [
   // Germany
-  ['RAD001','Fritz (rbb) ‚Äî Lokalmatadoren','Germany','Indie/Pop/Alternative',      'https://www.fritz.de/programm/aktionen/lokalmatadoren/','musik@fritz.de',                                    'PAID live studio session for Berlin artists. Pitch via musik@fritz.de ‚Äî short bio, Spotify, press folder. Write in German. No deadline ‚Äî always open.','','','High'],
+  ['RAD001','Fritz (rbb) — Lokalmatadoren','Germany','Indie/Pop/Alternative',      'https://www.fritz.de/programm/aktionen/lokalmatadoren/','musik@fritz.de',                                    'PAID live studio session for Berlin artists. Pitch via musik@fritz.de — short bio, Spotify, press folder. Write in German. No deadline — always open.','','','High'],
   ['RAD002','ByteFM',                'Germany',       'Indie/Alternative',          'https://www.byte.fm',                'https://www.byte.fm/redaktion/',                  'Indie-focused taste-maker. Email submissions to redaktion@byte.fm.',                    '','','High'],
   ['RAD003','radioeins (rbb)',        'Germany',       'Pop/Rock/Indie',             'https://www.radioeins.de',           'https://www.radioeins.de/service/kontakt.html',   'RBB flagship pop station. Submit new releases via contact form.',                       '','','Normal'],
   ['RAD004','Deutschlandfunk Kultur', 'Germany',       'Culture/Indie',              'https://www.deutschlandfunkkultur.de','',                                                'Public cultural broadcaster. Music submissions for review shows.',                      '','','Normal'],
@@ -742,7 +742,7 @@ const RADIO_SEED_DATA = [
   ['RAD017','France Inter',          'France',        'Pop/Indie/Culture',          'https://www.radiofrance.fr/franceinter','',                                              'Major French public broadcaster. Festival tie-ins, live sessions.',                     '','','Normal'],
   // International
   ['RAD018','Radio Paradise',        'International', 'Eclectic/Indie',             'https://www.radioparadise.com',      'https://www.radioparadise.com/cms/info.php?topic=musician_submission','US-based global audience. Artist submission form available.','','','Normal'],
-  ['RAD019','Fritz Unsigned',         'Germany',       'Indie/Pop',                  'https://bands.fritz.de',             'unsigned@fritz.de',                               'Fritz Unsigned ‚Äî unsigned/independent Berlin artists. Upload via bands.fritz.de or email unsigned@fritz.de. Sunday 8‚Äì10pm slot.', '','','High'],
+  ['RAD019','Fritz Unsigned',         'Germany',       'Indie/Pop',                  'https://bands.fritz.de',             'unsigned@fritz.de',                               'Fritz Unsigned — unsigned/independent Berlin artists. Upload via bands.fritz.de or email unsigned@fritz.de. Sunday 8–10pm slot.', '','','High'],
 ];
 
 const RADIO_HEADERS = ['ID','Station','Country','Format','URL','Submit URL','Notes','Last Submitted','Last Result','Priority'];
@@ -760,7 +760,7 @@ function setupRadioTab() {
     tab = ss.insertSheet(RADIO_TAB);
     Logger.log('Radio tab created.');
   } else {
-    Logger.log('Radio tab already exists ‚Äî seeding missing stations only.');
+    Logger.log('Radio tab already exists — seeding missing stations only.');
   }
 
   // Ensure header row
@@ -782,7 +782,7 @@ function setupRadioTab() {
   Logger.log('Radio tab setup complete. Rows: ' + (tab.getLastRow() - 1));
 }
 
-// GET ?action=listRadio ‚Äî returns all radio stations
+// GET ?action=listRadio — returns all radio stations
 function listRadio() {
   const tab = getRadioSheet();
   if (!tab) return { error: 'Radio tab not found. Run setupRadioTab() first.', stations: [] };
@@ -830,9 +830,9 @@ function updateRadio(id, field, value) {
 }
 
 
-// ‚îÄ‚îÄ Seed all sources as watching rows ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+// ── Seed all sources as watching rows ────────────────────────
 // Run seedAllSources() ONCE to pre-populate the sheet with all
-// scanner sources as "watching" rows ‚Äî no keyword detection needed.
+// scanner sources as "watching" rows — no keyword detection needed.
 // Existing URLs are skipped, so it's safe to re-run.
 
 function seedAllSources() {
@@ -876,7 +876,7 @@ function seedAllSources() {
   return { added };
 }
 
-// ‚îÄ‚îÄ Weekly scan trigger ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+// ── Weekly scan trigger ───────────────────────────────────────
 // Run setupWeeklyTrigger() ONCE to replace the monthly scan with
 // a weekly scan every Monday at 8am Berlin time.
 
@@ -896,11 +896,44 @@ function setupWeeklyTrigger() {
 function runWeeklyScan() {
   const scanResult    = scanSources();
   const monitorResult = monitorSources();
+  archiveOverdue();
   Logger.log('Weekly scan: ' + JSON.stringify(scanResult));
   Logger.log('Monitor: ' + JSON.stringify(monitorResult));
 }
 
-// ‚îÄ‚îÄ Test functions ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+// ── Archive overdue opportunities ─────────────────────────────
+// Marks any open/watching opportunity as 'closed' if its deadline
+// passed more than 14 days ago. Runs automatically as part of the
+// weekly scan, or can be triggered manually from the editor.
+
+function archiveOverdue() {
+  const sheet   = getSheet();
+  const data    = sheet.getDataRange().getValues();
+  const headers = headersFromRow(data[0]);
+  const today   = new Date(); today.setHours(0,0,0,0);
+  const cutoff  = new Date(today); cutoff.setDate(today.getDate() - 14);
+
+  let archived = 0;
+  for (let i = 1; i < data.length; i++) {
+    const row    = data[i];
+    const obj    = rowToObject(headers, row);
+    const status = (obj.Status || '').toLowerCase();
+    if (!['open','watching'].includes(status)) continue;
+    const dl = obj.Deadline ? new Date(obj.Deadline) : null;
+    if (!dl || isNaN(dl) || dl > cutoff) continue;
+    // Deadline was 14+ days ago — mark closed
+    const statusCol  = headers.indexOf('Status');
+    const updatedCol = headers.indexOf('Date Updated');
+    if (statusCol < 0) continue;
+    sheet.getRange(i + 1, statusCol + 1).setValue('closed');
+    if (updatedCol >= 0) sheet.getRange(i + 1, updatedCol + 1).setValue(Utilities.formatDate(today, 'Europe/Berlin', 'yyyy-MM-dd'));
+    archived++;
+  }
+  Logger.log('archiveOverdue: ' + archived + ' opportunities closed.');
+  return archived;
+}
+
+// ── Test functions ────────────────────────────────────────────
 
 function testGet() {
   const sheet = getSheet();
@@ -915,8 +948,8 @@ function testMarkApplied() {
 
 function testPost() {
   const fake = { postData: { contents: JSON.stringify({
-    Title:'TEST ‚Äî delete me', Organization:'Test', Type:'funding',
-    Status:'watching', Deadline:'2026-12-31', Amount:'‚Ç¨0',
+    Title:'TEST — delete me', Organization:'Test', Type:'funding',
+    Status:'watching', Deadline:'2026-12-31', Amount:'€0',
     Region:'Germany', Source:'test', Priority:'Low'
   })}};
   Logger.log(doPost(fake).getContent());
